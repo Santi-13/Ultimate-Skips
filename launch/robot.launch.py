@@ -18,9 +18,13 @@
 
 import os
 
+from ament_index_python.packages import get_package_share_directory
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.actions import RegisterEventHandler
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.conditions import IfCondition
 from launch.conditions import UnlessCondition
 from launch.event_handlers import OnProcessExit
@@ -34,6 +38,8 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
+    gazebo_params_file = os.path.join(get_package_share_directory('ultimate_skips'),'config','gazebo_params.yaml')
+
     namespace = LaunchConfiguration('namespace')
     declared_arguments = []
     declared_arguments.append(
@@ -133,6 +139,19 @@ def generate_launch_description():
         ]
     )
 
+    # Include the Gazebo launch file, provided by the gazebo_ros package
+    gazebo = IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([os.path.join(
+                    get_package_share_directory('gazebo_ros'), 'launch', 'gazebo.launch.py')]),
+                    launch_arguments={'extra_gazebo_args': '--ros-args --params-file ' + gazebo_params_file}.items()
+             )
+
+    # Run the spawner node from the gazebo_ros package. The entity name doesn't really matter if you only have a single robot.
+    spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
+                        arguments=['-topic', 'robot_description',
+                                   '-entity', 'my_tb3_3'],
+                        output='screen')
+    
     control_node = Node(
         namespace=namespace,
         package='controller_manager',
@@ -214,12 +233,14 @@ def generate_launch_description():
         )
 
     nodes = [
+        spawn_entity,
         control_node,
         robot_state_pub_node,
         joint_state_broadcaster_spawner,
-        delay_rviz_after_joint_state_broadcaster_spawner,
-        delay_diff_drive_controller_spawner_after_joint_state_broadcaster_spawner,
-        delay_imu_broadcaster_spawner_after_joint_state_broadcaster_spawner,
+        # delay_rviz_after_joint_state_broadcaster_spawner,
+        # delay_diff_drive_controller_spawner_after_joint_state_broadcaster_spawner,
+        # delay_imu_broadcaster_spawner_after_joint_state_broadcaster_spawner,
+        gazebo,
     ]
 
     return LaunchDescription(declared_arguments + nodes)

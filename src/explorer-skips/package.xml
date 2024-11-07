@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>turtlebot3_left_follower</name>
+  <name>explorer-skips</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="gerardosanchezz14@hotmail.com">ubuntu</maintainer>
-  <license>TODO: License declaration</license>
+  <description>Package that manages skip's mapping, navigation and exploration algorithms.</description>
+  <maintainer email="s.penunuri@hotmail.com">Sanmaster5</maintainer>
+  <license>Apache-2.0</license>
 
   <depend>rclpy</depend>
   <depend>sensor_msgs</depend>

@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'camaravision'
+package_name = 'vision-skips'
 
 setup(
     name=package_name,
@@ -13,15 +13,14 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='student',
-    maintainer_email='student@todo.todo',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    maintainer='Sanmaster5',
+    maintainer_email='s.penunuri@hotmail.com',
+    description="Package that manages the image processing of skip's camera in a server and sends the data to a client.",
+    license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
             'camara_compressed_client = camaravision.camara_compressed_client:main'
-            
         ],
     },
 )

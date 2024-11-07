@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>camaravision</name>
+  <name>vision-skips</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="student@todo.todo">student</maintainer>
-  <license>TODO: License declaration</license>
+  <description>Package that manages the image processing of skip's camera in a server and sends the data to a client.</description>
+  <maintainer email="s.penunuri@hotmail.com">Sanmaster5</maintainer>
+  <license>Apache-2.0</license>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

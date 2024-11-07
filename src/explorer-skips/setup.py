@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'turtlebot3_left_follower'
+package_name = 'explorer-skips'
 
 setup(
     name=package_name,
@@ -17,10 +17,10 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='ubuntu',
-    maintainer_email='gerardosanchezz14@hotmail.com',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    maintainer='Sanmaster5',
+    maintainer_email='s.penunuri@hotmail.com',
+    description="Package that manages skip's mapping, navigation and exploration algorithms.",
+    license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [

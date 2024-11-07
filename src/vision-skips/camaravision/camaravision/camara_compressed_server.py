@@ -3,9 +3,9 @@ import cv2 as cv
 import socket
 
 # Configuración del modelo YOLO
-LABELS_FILE = "/home/student/ros2_ws_ai/src/camaravision/camaravision/labels.names"
-CONFIG_FILE = "/home/student/ros2_ws_ai/src/camaravision/camaravision/yolo.cfg"
-WEIGHTS_FILE = "/home/student/ros2_ws_ai/src/camaravision/camaravision/yolo.weights"
+LABELS_FILE = "/Users/gerardosanchez/Documents/Tec de Monterrey/7mo_Semestre/Sistemas ciberfisicos II/turtlebot3_ws/Ultimate-Skips/src/vision-skips/camaravision/camaravision/labels.names"
+CONFIG_FILE = "/Users/gerardosanchez/Documents/Tec de Monterrey/7mo_Semestre/Sistemas ciberfisicos II/turtlebot3_ws/Ultimate-Skips/src/vision-skips/camaravision/camaravision/yolo.cfg"
+WEIGHTS_FILE = "/Users/gerardosanchez/Documents/Tec de Monterrey/7mo_Semestre/Sistemas ciberfisicos II/turtlebot3_ws/Ultimate-Skips/src/vision-skips/camaravision/camaravision/yolo.weights"
 
 # Cargamos los nombres de las clases
 with open(LABELS_FILE, "r") as f:
@@ -21,7 +21,7 @@ else:
     output_layers = [layer_names[unconnected_layers[0] - 1] if isinstance(unconnected_layers, np.ndarray) else layer_names[unconnected_layers - 1]]
 
 # Configuración de conexión
-HOST = "127.0.0.1"
+HOST = "0.0.0.0"
 PORT = 10002
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:

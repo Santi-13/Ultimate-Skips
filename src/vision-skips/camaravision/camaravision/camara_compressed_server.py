@@ -3,9 +3,9 @@ import cv2 as cv
 import socket
 
 # Configuración del modelo YOLO
-LABELS_FILE = "/Users/gerardosanchez/Documents/Tec de Monterrey/7mo_Semestre/Sistemas ciberfisicos II/turtlebot3_ws/Ultimate-Skips/src/vision-skips/camaravision/camaravision/labels.names"
-CONFIG_FILE = "/Users/gerardosanchez/Documents/Tec de Monterrey/7mo_Semestre/Sistemas ciberfisicos II/turtlebot3_ws/Ultimate-Skips/src/vision-skips/camaravision/camaravision/yolo.cfg"
-WEIGHTS_FILE = "/Users/gerardosanchez/Documents/Tec de Monterrey/7mo_Semestre/Sistemas ciberfisicos II/turtlebot3_ws/Ultimate-Skips/src/vision-skips/camaravision/camaravision/yolo.weights"
+LABELS_FILE = "labels.names"
+CONFIG_FILE = "yolo.cfg"
+WEIGHTS_FILE = "yolo.weights"
 
 # Cargamos los nombres de las clases
 with open(LABELS_FILE, "r") as f:

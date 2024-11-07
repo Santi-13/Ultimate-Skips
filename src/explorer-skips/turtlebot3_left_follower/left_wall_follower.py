@@ -6,7 +6,7 @@ from rclpy.qos import qos_profile_sensor_data
 import rclpy
 import math
 
-class LeftWallFollower(Node):
+class ImprovedSimplePledgeAlgorithm(Node):
     def __init__(self):
         super().__init__('left_wall_follower')
         
@@ -100,13 +100,13 @@ class LeftWallFollower(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    left_wall_follower = LeftWallFollower()
+    improved_simple_pledge_algorithm = ImprovedSimplePledgeAlgorithm()
     try:
-        rclpy.spin(left_wall_follower)
+        rclpy.spin(improved_simple_pledge_algorithm)
     except KeyboardInterrupt:
         pass
     finally:
-        left_wall_follower.destroy_node()
+        improved_simple_pledge_algorithm.destroy_node()
         rclpy.shutdown()
 
 if __name__ == '__main__':

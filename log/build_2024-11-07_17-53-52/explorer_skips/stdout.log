@@ -1,0 +1,48 @@
+running egg_info
+creating ../../build/explorer_skips/explorer_skips.egg-info
+writing ../../build/explorer_skips/explorer_skips.egg-info/PKG-INFO
+writing dependency_links to ../../build/explorer_skips/explorer_skips.egg-info/dependency_links.txt
+writing entry points to ../../build/explorer_skips/explorer_skips.egg-info/entry_points.txt
+writing requirements to ../../build/explorer_skips/explorer_skips.egg-info/requires.txt
+writing top-level names to ../../build/explorer_skips/explorer_skips.egg-info/top_level.txt
+writing manifest file '../../build/explorer_skips/explorer_skips.egg-info/SOURCES.txt'
+reading manifest file '../../build/explorer_skips/explorer_skips.egg-info/SOURCES.txt'
+adding license file 'LICENSE'
+writing manifest file '../../build/explorer_skips/explorer_skips.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/build
+creating /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/build/lib
+creating /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/build/lib/explorer_skips
+copying explorer_skips/__init__.py -> /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/build/lib/explorer_skips
+copying explorer_skips/nav_goal_sender.py -> /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/build/lib/explorer_skips
+copying explorer_skips/left_wall_follower.py -> /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/build/lib/explorer_skips
+running install
+running install_lib
+creating /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/lib/python3.10/site-packages/explorer_skips
+copying /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/build/lib/explorer_skips/__init__.py -> /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/lib/python3.10/site-packages/explorer_skips
+copying /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/build/lib/explorer_skips/nav_goal_sender.py -> /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/lib/python3.10/site-packages/explorer_skips
+copying /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/build/lib/explorer_skips/left_wall_follower.py -> /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/lib/python3.10/site-packages/explorer_skips
+byte-compiling /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/lib/python3.10/site-packages/explorer_skips/__init__.py to __init__.cpython-310.pyc
+byte-compiling /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/lib/python3.10/site-packages/explorer_skips/nav_goal_sender.py to nav_goal_sender.cpython-310.pyc
+byte-compiling /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/lib/python3.10/site-packages/explorer_skips/left_wall_follower.py to left_wall_follower.cpython-310.pyc
+running install_data
+creating /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/share/ament_index
+creating /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/share/ament_index/resource_index
+creating /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/share/ament_index/resource_index/packages
+copying resource/explorer_skips -> /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/share/ament_index/resource_index/packages
+copying package.xml -> /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/share/explorer_skips
+creating /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/share/explorer_skips/launch
+copying launch/exploration.launch.py -> /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/share/explorer_skips/launch
+creating /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/share/explorer_skips/config
+copying config/navigation.yaml -> /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/share/explorer_skips/config
+copying config/slam.yaml -> /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/share/explorer_skips/config
+creating /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/share/explorer_skips/rviz
+copying rviz/explore.rviz -> /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/share/explorer_skips/rviz
+running install_egg_info
+Copying ../../build/explorer_skips/explorer_skips.egg-info to /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/lib/python3.10/site-packages/explorer_skips-0.0.0-py3.10.egg-info
+running install_scripts
+Installing left_wall_follower script to /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/bin
+Installing maze_escape_robot script to /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/bin
+Installing pledge_algorithm = explorer_skips.pledge_algorithm:mainnav_goal_sender script to /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/bin
+writing list of installed files to '/home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/install.log'

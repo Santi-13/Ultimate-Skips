@@ -1,0 +1,12 @@
+source;share/explorer_skips/hook/path.ps1
+source;share/explorer_skips/hook/path.dsv
+source;share/explorer_skips/hook/path.sh
+source;share/explorer_skips/hook/pythonpath.ps1
+source;share/explorer_skips/hook/pythonpath.dsv
+source;share/explorer_skips/hook/pythonpath.sh
+source;share/explorer_skips/hook/pythonscriptspath.ps1
+source;share/explorer_skips/hook/pythonscriptspath.dsv
+source;share/explorer_skips/hook/pythonscriptspath.sh
+source;share/explorer_skips/hook/ament_prefix_path.ps1
+source;share/explorer_skips/hook/ament_prefix_path.dsv
+source;share/explorer_skips/hook/ament_prefix_path.sh

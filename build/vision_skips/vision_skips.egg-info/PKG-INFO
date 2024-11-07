@@ -1,0 +1,12 @@
+Metadata-Version: 2.1
+Name: vision-skips
+Version: 0.0.0
+Summary: Package that manages the image processing of skip's camera in a server and sends the data to a client.
+Home-page: UNKNOWN
+Maintainer: Sanmaster5
+Maintainer-email: s.penunuri@hotmail.com
+License: Apache-2.0
+Platform: UNKNOWN
+
+UNKNOWN
+

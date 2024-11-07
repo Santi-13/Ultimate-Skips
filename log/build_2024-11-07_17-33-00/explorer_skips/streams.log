@@ -1,0 +1,34 @@
+[0.884s] Invoking command in '/home/sanmaster/ultimate_skips/Ultimate-Skips/src/explorer_skips': PYTHONPATH=/home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/explorer_skips build --build-base /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/build install --record /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/install.log --single-version-externally-managed install_data
+[1.134s] running egg_info
+[1.135s] creating ../../build/explorer_skips/explorer_skips.egg-info
+[1.135s] writing ../../build/explorer_skips/explorer_skips.egg-info/PKG-INFO
+[1.135s] writing dependency_links to ../../build/explorer_skips/explorer_skips.egg-info/dependency_links.txt
+[1.135s] writing entry points to ../../build/explorer_skips/explorer_skips.egg-info/entry_points.txt
+[1.136s] writing requirements to ../../build/explorer_skips/explorer_skips.egg-info/requires.txt
+[1.136s] writing top-level names to ../../build/explorer_skips/explorer_skips.egg-info/top_level.txt
+[1.136s] writing manifest file '../../build/explorer_skips/explorer_skips.egg-info/SOURCES.txt'
+[1.137s] reading manifest file '../../build/explorer_skips/explorer_skips.egg-info/SOURCES.txt'
+[1.138s] writing manifest file '../../build/explorer_skips/explorer_skips.egg-info/SOURCES.txt'
+[1.138s] running build
+[1.138s] running build_py
+[1.138s] creating /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/build
+[1.138s] creating /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/build/lib
+[1.138s] creating /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/build/lib/explorer_skips
+[1.138s] copying explorer_skips/__init__.py -> /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/build/lib/explorer_skips
+[1.139s] copying explorer_skips/nav_goal_sender.py -> /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/build/lib/explorer_skips
+[1.139s] copying explorer_skips/left_wall_follower.py -> /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/build/lib/explorer_skips
+[1.139s] running install
+[1.139s] running install_lib
+[1.140s] creating /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/lib/python3.10/site-packages/explorer_skips
+[1.140s] copying /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/build/lib/explorer_skips/__init__.py -> /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/lib/python3.10/site-packages/explorer_skips
+[1.140s] copying /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/build/lib/explorer_skips/nav_goal_sender.py -> /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/lib/python3.10/site-packages/explorer_skips
+[1.140s] copying /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/build/lib/explorer_skips/left_wall_follower.py -> /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/lib/python3.10/site-packages/explorer_skips
+[1.140s] byte-compiling /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/lib/python3.10/site-packages/explorer_skips/__init__.py to __init__.cpython-310.pyc
+[1.140s] byte-compiling /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/lib/python3.10/site-packages/explorer_skips/nav_goal_sender.py to nav_goal_sender.cpython-310.pyc
+[1.141s] byte-compiling /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/lib/python3.10/site-packages/explorer_skips/left_wall_follower.py to left_wall_follower.cpython-310.pyc
+[1.142s] running install_data
+[1.142s] creating /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/share/ament_index
+[1.142s] creating /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/share/ament_index/resource_index
+[1.142s] creating /home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/share/ament_index/resource_index/packages
+[1.142s] error: can't copy 'resource/explorer_skips': doesn't exist or not a regular file
+[1.160s] Invoked command in '/home/sanmaster/ultimate_skips/Ultimate-Skips/src/explorer_skips' returned '1': PYTHONPATH=/home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/sanmaster/ultimate_skips/Ultimate-Skips/install/explorer_skips/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/explorer_skips build --build-base /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/build install --record /home/sanmaster/ultimate_skips/Ultimate-Skips/build/explorer_skips/install.log --single-version-externally-managed install_data

@@ -11,9 +11,7 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/launch', ['launch/exploration.launch.py']),
-        ('share/' + package_name + '/config', ['config/navigation.yaml', 'config/slam.yaml'])        
-
-
+        ('share/' + package_name + '/config', ['config/navigation.yaml', 'config/slam.yaml'])    
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -24,10 +22,10 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'left_wall_follower = turtlebot3_left_follower.left_wall_follower:main',
-            'maze_escape_robot = turtlebot3_left_follower.maze_escape_robot:main',
-            'pledge_algorithm = turtlebot3_left_follower.pledge_algorithm:main'
-            'nav_goal_sender = turtlebot3_left_follower.nav_goal_sender:main'
+            'left_wall_follower = explorer_skips.left_wall_follower:main',
+            'maze_escape_robot = explorer_skips.maze_escape_robot:main',
+            'pledge_algorithm = explorer_skips.pledge_algorithm:main'
+            'nav_goal_sender = explorer_skips.nav_goal_sender:main'
         ],
     },
 )

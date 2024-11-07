@@ -1,0 +1,39 @@
+running egg_info
+creating ../../build/vision-skips/vision_skips.egg-info
+writing ../../build/vision-skips/vision_skips.egg-info/PKG-INFO
+writing dependency_links to ../../build/vision-skips/vision_skips.egg-info/dependency_links.txt
+writing entry points to ../../build/vision-skips/vision_skips.egg-info/entry_points.txt
+writing requirements to ../../build/vision-skips/vision_skips.egg-info/requires.txt
+writing top-level names to ../../build/vision-skips/vision_skips.egg-info/top_level.txt
+writing manifest file '../../build/vision-skips/vision_skips.egg-info/SOURCES.txt'
+reading manifest file '../../build/vision-skips/vision_skips.egg-info/SOURCES.txt'
+adding license file 'LICENSE'
+writing manifest file '../../build/vision-skips/vision_skips.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/sanmaster/ultimate_skips/Ultimate-Skips/build/vision-skips/build
+creating /home/sanmaster/ultimate_skips/Ultimate-Skips/build/vision-skips/build/lib
+creating /home/sanmaster/ultimate_skips/Ultimate-Skips/build/vision-skips/build/lib/vision-skips
+copying vision-skips/__init__.py -> /home/sanmaster/ultimate_skips/Ultimate-Skips/build/vision-skips/build/lib/vision-skips
+copying vision-skips/camara_compressed_client.py -> /home/sanmaster/ultimate_skips/Ultimate-Skips/build/vision-skips/build/lib/vision-skips
+copying vision-skips/camara_compressed_server.py -> /home/sanmaster/ultimate_skips/Ultimate-Skips/build/vision-skips/build/lib/vision-skips
+running install
+running install_lib
+creating /home/sanmaster/ultimate_skips/Ultimate-Skips/install/vision-skips/lib/python3.10/site-packages/vision-skips
+copying /home/sanmaster/ultimate_skips/Ultimate-Skips/build/vision-skips/build/lib/vision-skips/__init__.py -> /home/sanmaster/ultimate_skips/Ultimate-Skips/install/vision-skips/lib/python3.10/site-packages/vision-skips
+copying /home/sanmaster/ultimate_skips/Ultimate-Skips/build/vision-skips/build/lib/vision-skips/camara_compressed_client.py -> /home/sanmaster/ultimate_skips/Ultimate-Skips/install/vision-skips/lib/python3.10/site-packages/vision-skips
+copying /home/sanmaster/ultimate_skips/Ultimate-Skips/build/vision-skips/build/lib/vision-skips/camara_compressed_server.py -> /home/sanmaster/ultimate_skips/Ultimate-Skips/install/vision-skips/lib/python3.10/site-packages/vision-skips
+byte-compiling /home/sanmaster/ultimate_skips/Ultimate-Skips/install/vision-skips/lib/python3.10/site-packages/vision-skips/__init__.py to __init__.cpython-310.pyc
+byte-compiling /home/sanmaster/ultimate_skips/Ultimate-Skips/install/vision-skips/lib/python3.10/site-packages/vision-skips/camara_compressed_client.py to camara_compressed_client.cpython-310.pyc
+byte-compiling /home/sanmaster/ultimate_skips/Ultimate-Skips/install/vision-skips/lib/python3.10/site-packages/vision-skips/camara_compressed_server.py to camara_compressed_server.cpython-310.pyc
+running install_data
+creating /home/sanmaster/ultimate_skips/Ultimate-Skips/install/vision-skips/share/ament_index
+creating /home/sanmaster/ultimate_skips/Ultimate-Skips/install/vision-skips/share/ament_index/resource_index
+creating /home/sanmaster/ultimate_skips/Ultimate-Skips/install/vision-skips/share/ament_index/resource_index/packages
+copying resource/vision-skips -> /home/sanmaster/ultimate_skips/Ultimate-Skips/install/vision-skips/share/ament_index/resource_index/packages
+copying package.xml -> /home/sanmaster/ultimate_skips/Ultimate-Skips/install/vision-skips/share/vision-skips
+running install_egg_info
+Copying ../../build/vision-skips/vision_skips.egg-info to /home/sanmaster/ultimate_skips/Ultimate-Skips/install/vision-skips/lib/python3.10/site-packages/vision_skips-0.0.0-py3.10.egg-info
+running install_scripts
+Installing camara_compressed_client script to /home/sanmaster/ultimate_skips/Ultimate-Skips/install/vision-skips/lib/vision-skips
+writing list of installed files to '/home/sanmaster/ultimate_skips/Ultimate-Skips/build/vision-skips/install.log'

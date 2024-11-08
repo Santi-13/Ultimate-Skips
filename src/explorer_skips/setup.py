@@ -10,7 +10,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/launch', ['launch/exploration.launch.py']),
+        ('share/' + package_name + '/launch', ['launch/exploration.launch.py', 'launch/left_wall_exploration.launch.py']),
         ('share/' + package_name + '/config', ['config/navigation.yaml', 'config/slam.yaml']),
         ('share/' + package_name + '/rviz', ['rviz/explore.rviz']),  
     ],

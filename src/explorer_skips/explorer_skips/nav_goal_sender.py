@@ -7,7 +7,7 @@ from rclpy.duration import Duration
 
 class NavGoalSender(Node):
     def __init__(self):
-        super()._init_('nav_goal_sender')
+        super().__init__('nav_goal_sender')
         self.nav_to_pose_client = ActionClient(self, NavigateToPose, 'navigate_to_pose')
         
     def send_goal(self, position_x, position_y, orientation_z):

@@ -30,7 +30,7 @@ class CameraClientNode(Node):
         self.bridge = CvBridge()
 
         # Configuración del servidor
-        self.host = "127.0.0.1"  # Cambia a la IP del servidor si es necesario
+        self.host = "192.168.137.165"  # Cambia a la IP del servidor si es necesario
         self.port = 10002
         self.get_logger().info("Camera client node initialized and ready.")
 

@@ -1,3 +1,0 @@
-[console_scripts]
-camara_compressed_client = vision_skips.camara_compressed_client:main
-

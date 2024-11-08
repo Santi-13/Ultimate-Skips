@@ -24,7 +24,7 @@ def generate_launch_description():
         # Nodo de SLAM Toolbox
         Node(
             package='slam_toolbox',
-            executable='sync_slam_toolbox_node',
+            executable='async_slam_toolbox_node',
             name='slam_toolbox',
             output='screen',
             parameters=[slam_params]

@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import Point
 from nav2_msgs.action import NavigateToPose
 from rclpy.duration import Duration
 
@@ -9,7 +9,19 @@ class NavGoalSender(Node):
     def __init__(self):
         super().__init__('nav_goal_sender')
         self.nav_to_pose_client = ActionClient(self, NavigateToPose, 'navigate_to_pose')
+        self.goal_sub = self.create_subscription(
+            Point,
+            'unknown_frontier_goal',
+            self.goal_callback,
+            10
+        )
         
+    def goal_callback(self,msg):
+        x = msg.x
+        y = msg.y
+
+        self.send_goal(x,y,0.0)
+
     def send_goal(self, position_x, position_y, orientation_z):
         # Esperar a que el servidor de acción esté disponible
         while not self.nav_to_pose_client.wait_for_server(timeout_sec=1.0):
@@ -59,10 +71,8 @@ def main():
     rclpy.init()
     
     nav_goal_sender = NavGoalSender()
-    
-    # Ejemplo de envío de un goal (x=1.0, y=1.0, orientación_z=0.0)
-    nav_goal_sender.send_goal(8.0, 7.5, 0.0)
-    
+    rclpy.spin(nav_goal_sender)
+
     nav_goal_sender.destroy_node()
     rclpy.shutdown()
 

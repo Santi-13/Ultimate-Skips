@@ -61,7 +61,7 @@ def main():
     nav_goal_sender = NavGoalSender()
     
     # Ejemplo de envío de un goal (x=1.0, y=1.0, orientación_z=0.0)
-    nav_goal_sender.send_goal(1.0, 1.0, 0.0)
+    nav_goal_sender.send_goal(8.0, 7.5, 0.0)
     
     nav_goal_sender.destroy_node()
     rclpy.shutdown()

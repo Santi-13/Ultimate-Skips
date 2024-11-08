@@ -24,8 +24,6 @@ setup(
     entry_points={
         'console_scripts': [
             'left_wall_follower = explorer_skips.left_wall_follower:main',
-            'maze_escape_robot = explorer_skips.maze_escape_robot:main',
-            'pledge_algorithm = explorer_skips.pledge_algorithm:main'
             'nav_goal_sender = explorer_skips.nav_goal_sender:main'
         ],
     },

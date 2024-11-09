@@ -20,6 +20,12 @@ def generate_launch_description():
 
 
     return LaunchDescription([
+        Node(
+            package='tf2_ros',
+            namespace = 'scan_to_map',
+            executable='static_transform_publisher',
+            arguments= ["0", "0", "0", "0", "0", "0", "map", "scan"]
+        ),
         # Node de rviz2
         Node(
             package='rviz2',
@@ -30,7 +36,7 @@ def generate_launch_description():
         # Nodo de SLAM Toolbox
         Node(
             package='slam_toolbox',
-            executable='sync_slam_toolbox_node',
+            executable='async_slam_toolbox_node',
             name='slam_toolbox',
             output='screen',
             parameters=[slam_params]

@@ -5,21 +5,23 @@ from geometry_msgs.msg import Point
 import numpy as np
 import math
 
-class FrontierAnalyzer(Node):
+class WavefrontPlanner(Node):
     def __init__(self):
-        super().__init__('frontier_analyzer')
+        super().__init__('wavefront_planner')
         self.map_sub = self.create_subscription(
             OccupancyGrid,
             'map',
             self.map_callback,
             10
         )
+
         self.pose_sub = self.create_subscription(
             Odometry,
             'odom',
             self.pose_callback,
             10
         )
+        
         self.goal_pub = self.create_publisher(
             Point,
             'unknown_frontier_goal',
@@ -46,15 +48,6 @@ class FrontierAnalyzer(Node):
     def pose_callback(self, msg):
         # self.get_logger().info('Pose Callback')
         self.current_position = msg.pose.pose.position
-        if self.goal_active and self.goal_point is not None:
-            distance = math.hypot(
-                self.goal_point.x - self.current_position.x,
-                self.goal_point.y - self.current_position.y
-            )
-            if distance < 0.5:  # Goal tolerance in meters
-                # self.get_logger().info('Goal reached.')
-                self.goal_active = False
-                self.goal_point = None
 
     def find_frontiers(self, occupancy_grid):
         # Convert the 1D data array into a 2D numpy array
@@ -66,7 +59,11 @@ class FrontierAnalyzer(Node):
         origin_x = occupancy_grid.info.origin.position.x
         origin_y = occupancy_grid.info.origin.position.y
 
-        
+        if self.current_position is not None:
+            for i in range(1,10):
+                x_pos = self.current_position.x
+                y_pos = self.current_position.y
+                data[x_pos+i*2][y_pos+i*2] 
 
         # Iterate over each cell in the grid
         for i in range(occupancy_grid.info.height):
@@ -92,42 +89,54 @@ class FrontierAnalyzer(Node):
                             break  # No need to check other neighbors
         return frontiers
 
-    def get_neighbors(self, i, j, height, width):
-        neighbors = []
-        if i > 0:
-            neighbors.append((i - 1, j))
-        if i < height - 1:
-            neighbors.append((i + 1, j))
-        if j > 0:
-            neighbors.append((i, j - 1))
-        if j < width - 1:
-            neighbors.append((i, j + 1))
-        return neighbors
+class OccupancyGrid2d():
+    class CostValues(Enum):
+        FreeSpace = 0
+        InscribedInflated = 100
+        LethalObstacle = 100
+        NoInformation = -1
 
-    def select_goal(self, frontiers):
-        # self.get_logger().info('Select Goal')
+    def __init__(self, map):
+        self.map = map
 
-        # Select the closest frontier to the current position
-        min_distance = float('inf')
-        closest_point = None
-        if self.current_position is not None:
-            for point in frontiers:
-                distance = math.hypot(
-                    point.x - self.current_position.x,
-                    point.y - self.current_position.y
-                )
-                if distance < min_distance:
-                    min_distance = distance
-                    closest_point = point
-            return closest_point
-        else:
-            pass
+    def getCost(self, mx, my):
+        return self.map.data[self.__getIndex(mx, my)]
+
+    def getSize(self):
+        return (self.map.info.width, self.map.info.height)
+
+    def getSizeX(self):
+        return self.map.info.width
+
+    def getSizeY(self):
+        return self.map.info.height
+
+    def mapToWorld(self, mx, my):
+        wx = self.map.info.origin.position.x + (mx + 0.5) * self.map.info.resolution
+        wy = self.map.info.origin.position.y + (my + 0.5) * self.map.info.resolution
+
+        return (wx, wy)
+
+    def worldToMap(self, wx, wy):
+        if (wx < self.map.info.origin.position.x or wy < self.map.info.origin.position.y):
+            raise Exception("World coordinates out of bounds")
+
+        mx = int((wx - self.map.info.origin.position.x) / self.map.info.resolution)
+        my = int((wy - self.map.info.origin.position.y) / self.map.info.resolution)
+        
+        if  (my > self.map.info.height or mx > self.map.info.width):
+            raise Exception("Out of bounds")
+
+        return (mx, my)
+
+    def __getIndex(self, mx, my):
+        return my * self.map.info.width + mx
 
 def main():
     rclpy.init()
-    frontier_explorer = FrontierAnalyzer()
-    rclpy.spin(frontier_explorer)
-    frontier_explorer.destroy_node()
+    wavefront_planner = WavefrontPlanner()
+    rclpy.spin(wavefront_planner)
+    wavefront_planner.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__':

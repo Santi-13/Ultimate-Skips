@@ -39,12 +39,12 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(nav2_bringup_dir, 'launch', 'navigation_launch.py')),
             launch_arguments={'params_file': nav2_params}.items(),
-        )
+        ),
         # Tu nodo de exploración
-        #Node(
-        #    package='autonomous_explore_cpp',
-        #    executable='autonomous_explore',
-        #    name='autonomous_explore',
-        #    output='screen'
-        #),
+        Node(
+           package='explorer_skips',
+           executable='nav_goal_sender',
+           name='nav_goal_sender',
+           output='screen'
+        ),
     ])

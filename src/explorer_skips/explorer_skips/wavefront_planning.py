@@ -50,44 +50,8 @@ class WavefrontPlanner(Node):
         self.current_position = msg.pose.pose.position
 
     def find_frontiers(self, occupancy_grid):
-        # Convert the 1D data array into a 2D numpy array
-        data = np.array(occupancy_grid.data).reshape(
-            (occupancy_grid.info.height, occupancy_grid.info.width)
-        )
-        frontiers = []
-        resolution = occupancy_grid.info.resolution
-        origin_x = occupancy_grid.info.origin.position.x
-        origin_y = occupancy_grid.info.origin.position.y
-
-        if self.current_position is not None:
-            for i in range(1,10):
-                x_pos = self.current_position.x
-                y_pos = self.current_position.y
-                data[x_pos+i*2][y_pos+i*2] 
-
-        # Iterate over each cell in the grid
-        for i in range(occupancy_grid.info.height):
-            for j in range(occupancy_grid.info.width):
-                if data[i][j] == 0:
-                    # Check 4-connected neighbors
-                    neighbors = self.get_neighbors(
-                        i, j, occupancy_grid.info.height, occupancy_grid.info.width
-                    )
-                    for n in neighbors:
-                        ni, nj = n
-                        if data[ni][nj] == -1:
-                            # Frontier found
-                            # Convert grid index to world coordinates
-                            x = origin_x + (j + 0.5) * resolution
-                            y = origin_y + (i + 0.5) * resolution
-                            point = Point()
-                            point.x = x
-                            point.y = y
-                            point.z = 0.0
-                            frontiers.append(point)
-                            self.get_logger().info(f"New point detected at {point}")
-                            break  # No need to check other neighbors
-        return frontiers
+        # Number of
+        n = 10
 
 class OccupancyGrid2d():
     class CostValues(Enum):

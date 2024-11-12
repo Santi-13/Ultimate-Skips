@@ -13,6 +13,8 @@ setup(
         ('share/' + package_name + '/launch', ['launch/exploration.launch.py', 'launch/left_wall_exploration.launch.py']),
         ('share/' + package_name + '/config', ['config/navigation.yaml', 'config/slam.yaml']),
         ('share/' + package_name + '/rviz', ['rviz/explore.rviz']),  
+        ('share/' + package_name + '/worlds', ['worlds/map_world.world','worlds/map.sdf', 'worlds/map.pgm']),  
+
     ],
     install_requires=['setuptools'],
     zip_safe=True,

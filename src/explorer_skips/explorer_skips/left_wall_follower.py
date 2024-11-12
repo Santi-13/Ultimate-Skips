@@ -67,8 +67,7 @@ class ImprovedSimplePledgeAlgorithm(Node):
         request = SaveMap.Request()
 
         # Solo usar el nombre del mapa, sin directorio
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        map_name = f'map_{timestamp}'
+        map_name = f'map'
 
         self.get_logger().info(f'Intentando guardar el mapa con nombre: {map_name}')
 

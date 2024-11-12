@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <sdf version="1.7">
-  <model name="map">
+  <model name="gmap">
     <static>false</static>
     <link name="link">
       <visual name="visual">

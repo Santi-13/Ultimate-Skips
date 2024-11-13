@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import PointStamped
 from nav2_msgs.action import NavigateToPose
 from rclpy.duration import Duration
 
@@ -10,15 +10,15 @@ class NavGoalSender(Node):
         super().__init__('nav_goal_sender')
         self.nav_to_pose_client = ActionClient(self, NavigateToPose, 'navigate_to_pose')
         self.goal_sub = self.create_subscription(
-            Point,
+            PointStamped,
             'unknown_frontier_goal',
             self.goal_callback,
             10
         )
         
     def goal_callback(self,msg):
-        x = msg.x
-        y = msg.y
+        x = msg.point.x
+        y = msg.point.y
 
         self.send_goal(x,y,0.0)
 

@@ -37,19 +37,26 @@ def generate_launch_description():
             package='slam_toolbox',
             executable='async_slam_toolbox_node',
             name='slam_toolbox',
-            parameters=[slam_params]
+            parameters=[slam_params],
+            output='log'
         ),
         # Lanzar Navigation2
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(nav2_bringup_dir, 'launch', 'navigation_launch.py')),
-            launch_arguments={'params_file': nav2_params}.items(),
+            launch_arguments={'params_file': nav2_params, 'output': 'log'}.items(),
+        ),
+        # Nodo para marcadores
+        Node(
+           package='explorer_skips',
+           executable='landmark_marker',
+           name='landmark_marker',
+           output='screen'
         ),
         # Tu nodo de exploración
         # Node(
         #    package='explorer_skips',
-        #    executable='nav_goal_sender',
-        #    name='nav_goal_sender',
+        #    executable='wavefront_planner',
+        #    name='wavefront_planner',
         #    output='screen'
-        # ),
-
+        # )
     ])

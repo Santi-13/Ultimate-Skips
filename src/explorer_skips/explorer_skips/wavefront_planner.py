@@ -36,17 +36,19 @@ class WavefrontPlanner(Node):
         )
 
 
-        self.min_unknown_cells = 7
+        self.min_unknown_cells = 5
 
         self.goal_active = False
         self.current_position = None
         self.goal_point = None
 
     def map_callback(self, msg):
+        self.get_logger().info(f"Received OccupancyGrid with shape: {msg.info.width}x{msg.info.height}")
+        
         # Process the OccupancyGrid to find frontiers
-        frontiers = self.find_frontiers(msg)
+        frontiers = self.find_frontiers(msg)    
+        
  
-
     def pose_callback(self, msg):
         # self.get_logger().info('Pose Callback')
         self.current_position = msg.pose.pose.position
@@ -54,80 +56,118 @@ class WavefrontPlanner(Node):
     def find_frontiers(self, occupancy_grid):
         # Uses wavefront planning to find the frontiers by searching around the robot
         # Convert the 1D data array into a 2D numpy array
-        data = np.array(occupancy_grid.data).reshape(
-            ( occupancy_grid.info.height, occupancy_grid.info.width )
-        )
-        
+        data = np.array(occupancy_grid.data).reshape((occupancy_grid.info.height, occupancy_grid.info.width))
+
         # Number of radius around the robot
-        n = 10
+        n = 6
 
-        # Current Robot Position
         if self.current_position is not None:
-            x, y = int(self.current_position.x), int(self.current_position.y)      
+            # Current Robot Position
+            x, y = float(self.current_position.x), float(self.current_position.y)      
 
-            def check_cell(x, y):
-                if data[x][y] == -1:
-                    if self.count_unknown_neighbors(data, x, y) >= self.min_unknown_cells:
-                        return PointStamped(
-                            header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
-                            point=Point(x=float(x), y=float(y), z=0.0)
-                        )
-                return None
+            # Convert robot position to grid coordinates
+            resolution = occupancy_grid.info.resolution
+            
+            grid_x = int((x - occupancy_grid.info.origin.position.x) / resolution)
+            grid_y = int((y - occupancy_grid.info.origin.position.y) / resolution)
+
+            def check_cell(x, y, width, height):
+                if 0 <= grid_x < width and 0 <= grid_y < height:
+                    if data[y][x] == -1:
+                        if self.count_unknown_neighbors(data, x, y) >= self.min_unknown_cells:
+                            return PointStamped(
+                                header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
+                                point=Point(x=float(x), y=float(y), z=0.0)
+                            )
+                    return None
+                else:
+                    self.get_logger().info("Robot position is outside the map bounds")
         
             # Frontiers array
             frontiers = []
             for i in range(1,n):
-                upper_bound_x = x + 2*i
-                upper_bound_y = y + 2*i
+                grid_x_radius = 2*i
+                grid_y_radius = 2*i
 
-                segment_half = int(4*n/2)
+                x_radius = (grid_x_radius + 0.0) * resolution 
+                y_radius = (grid_y_radius + 0.0) * resolution 
+                
+                # self.get_logger().info(f'=======================')
+                # self.get_logger().info(f'map dimensions: ({occupancy_grid.info.width}, {occupancy_grid.info.height})')
+                # self.get_logger().info(f'=======================')
+                # self.get_logger().info(f'Circumference no {i}')
+                # self.get_logger().info(f'Currently on: ')
+                # self.get_logger().info(f'World ({x}, {y})')
+                # self.get_logger().info(f'Grid ({grid_x}, {grid_y})')
+                # self.get_logger().info(f'=======================')
+                segment_half = int(4*i/2)
 
-                for yi in range(-segment_half+y, segment_half+y+1):
-                    self.landmark_pub.publish(PointStamped(
-                            header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
-                            point=Point(x=float(-upper_bound_x), y=float(yi), z=0.0)
-                        ))
+                for yi in range(-segment_half + grid_y, segment_half + grid_y + 1):
+                    # self.get_logger().info(f'checking grid ({grid_x-grid_x_radius}, {yi})')
+                    temp_robot_y = (yi + 0.5) * resolution + occupancy_grid.info.origin.position.y
+                    # self.get_logger().info(f'Marker on ({x-x_radius}, {temp_robot_y})')
+                    # self.get_logger().info(f'=======================')
+                    # self.get_logger().info(f'checking grid ({grid_x+grid_x_radius}, {yi})')
+                    # self.get_logger().info(f'Marker on ({x+x_radius}, {temp_robot_y})')
+                    # self.get_logger().info(f'=======================')
 
-                    frontier = check_cell(-upper_bound_x, yi)
+                    # self.landmark_pub.publish(PointStamped(
+                    #         header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
+                    #         point=Point(x=float(x-x_radius), y=float(temp_robot_y), z=0.0)
+                    #     ))
+
+                    frontier = check_cell(grid_x-grid_x_radius, yi,occupancy_grid.info.width,occupancy_grid.info.height)
                     if frontier: 
-                        self.get_logger().info("Frontera Encontrada")
+                        # self.get_logger().info("Frontera Encontrada")
                         frontiers.append(frontier)
-                        # self.landmark_pub.publish(frontier)
+                        self.landmark_pub.publish(frontier)
                     
-                    self.landmark_pub.publish(PointStamped(
-                            header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
-                            point=Point(x=float(upper_bound_x), y=float(yi), z=0.0)
-                        ))
+                    # self.landmark_pub.publish(PointStamped(
+                    #         header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
+                    #         point=Point(x=float(x+x_radius), y=float(temp_robot_y), z=0.0)
+                    #     ))
                     
-                    frontier = check_cell(upper_bound_x, yi)
+                    frontier = check_cell(grid_x+grid_x_radius, yi,occupancy_grid.info.width,occupancy_grid.info.height)
                     if frontier: 
-                        self.get_logger().info("Frontera Encontrada")
+                        # self.get_logger().info("Frontera Encontrada")
                         frontiers.append(frontier)
-                        # self.landmark_pub.publish(frontier)
+                        self.landmark_pub.publish(frontier)
 
-                for xi in range(-segment_half+x, segment_half+x+1):
-                    self.landmark_pub.publish(PointStamped(
-                            header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
-                            point=Point(x=float(xi), y=float(-upper_bound_y), z=0.0)
-                        ))
+                for xi in range(-segment_half+grid_x, segment_half+grid_x+1):
+
+                    # self.get_logger().info(f'checking grid ({grid_y-grid_y_radius}, {xi})')
+                    temp_robot_x = (xi + 0.5) * resolution + occupancy_grid.info.origin.position.x
+                    # self.get_logger().info(f'Marker on ({temp_robot_x}, {y-y_radius})')
+                    # self.get_logger().info(f'=======================')
+                    # self.get_logger().info(f'checking grid ({grid_y+grid_y_radius}, {xi})')
+                    # self.get_logger().info(f'Marker on ({temp_robot_x}, {y+y_radius})')
+                    # self.get_logger().info(f'=======================')
+
+                    # self.landmark_pub.publish(PointStamped(
+                    #         header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
+                    #         point=Point(x=float(temp_robot_x), y=float(y-y_radius), z=0.0)
+                    #     ))
                     
-                    frontier = check_cell(xi, -upper_bound_y)
+                    frontier = check_cell(xi, grid_y-grid_y_radius,occupancy_grid.info.width,occupancy_grid.info.height)
                     if frontier: 
-                        self.get_logger().info("Frontera Encontrada")
+                        # self.get_logger().info("Frontera Encontrada")
                         frontiers.append(frontier)
-                        # self.landmark_pub.publish(frontier)
+                        self.landmark_pub.publish(frontier)
                     
-                    self.landmark_pub.publish(PointStamped(
-                            header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
-                            point=Point(x=float(xi), y=float(upper_bound_y), z=0.0)
-                        ))
+                    # self.landmark_pub.publish(PointStamped(
+                    #         header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
+                    #         point=Point(x=float(temp_robot_x), y=float(y+y_radius), z=0.0)
+                    #     ))
                     
-                    frontier = check_cell(xi, upper_bound_y)
+                    frontier = check_cell(xi, grid_y+grid_y_radius,occupancy_grid.info.width,occupancy_grid.info.height)
                     if frontier: 
-                        self.get_logger().info("Frontera Encontrada")
+                        # self.get_logger().info("Frontera Encontrada")
 
                         frontiers.append(frontier)
-                        # self.landmark_pub.publish(frontier)
+                        self.landmark_pub.publish(frontier)
+        
+        else:
+            self.get_logger().info("No robot position available")
                 
     def count_unknown_neighbors(self, data, x, y):
         counter = 0
@@ -138,6 +178,8 @@ class WavefrontPlanner(Node):
                     if 0 <= nx < data.shape[0] and 0 <= ny < data.shape[1]:
                         if data[nx][ny] == -1:
                             counter += 1
+                        elif data[nx][ny] == 100:
+                            counter = -8
         return counter
 
 def main():

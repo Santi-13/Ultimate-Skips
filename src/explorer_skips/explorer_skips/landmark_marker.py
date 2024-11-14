@@ -29,15 +29,17 @@ class LandmarkMarker(Node):
         marker.pose.orientation.w = 1.0
 
         # Escala del marcador
-        marker.scale.x = 0.2
-        marker.scale.y = 0.2
-        marker.scale.z = 0.2
+        marker.scale.x = 0.02
+        marker.scale.y = 0.02
+        marker.scale.z = 0.02
 
         # Color del marcador
-        marker.color.r = 1.0
+        marker.color.r = (0.05*self.no_of_markers) % 1.0
         marker.color.g = 0.0
         marker.color.b = 0.0
         marker.color.a = 1.0
+
+        self.get_logger().info(f'Mark published at {marker.pose.position.x}, {marker.pose.position.y}')
 
         # Publicar el marcador
         self.marker_publisher.publish(marker)

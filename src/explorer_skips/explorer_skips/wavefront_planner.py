@@ -83,31 +83,51 @@ class WavefrontPlanner(Node):
                 segment_half = int(4*n/2)
 
                 for yi in range(-segment_half+y, segment_half+y+1):
+                    self.landmark_pub.publish(PointStamped(
+                            header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
+                            point=Point(x=float(-upper_bound_x), y=float(yi), z=0.0)
+                        ))
+
                     frontier = check_cell(-upper_bound_x, yi)
                     if frontier: 
                         self.get_logger().info("Frontera Encontrada")
                         frontiers.append(frontier)
-                        self.landmark_pub.publish(frontier)
+                        # self.landmark_pub.publish(frontier)
+                    
+                    self.landmark_pub.publish(PointStamped(
+                            header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
+                            point=Point(x=float(upper_bound_x), y=float(yi), z=0.0)
+                        ))
                     
                     frontier = check_cell(upper_bound_x, yi)
                     if frontier: 
                         self.get_logger().info("Frontera Encontrada")
                         frontiers.append(frontier)
-                        self.landmark_pub.publish(frontier)
+                        # self.landmark_pub.publish(frontier)
 
                 for xi in range(-segment_half+x, segment_half+x+1):
+                    self.landmark_pub.publish(PointStamped(
+                            header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
+                            point=Point(x=float(xi), y=float(-upper_bound_y), z=0.0)
+                        ))
+                    
                     frontier = check_cell(xi, -upper_bound_y)
                     if frontier: 
                         self.get_logger().info("Frontera Encontrada")
                         frontiers.append(frontier)
-                        self.landmark_pub.publish(frontier)
+                        # self.landmark_pub.publish(frontier)
+                    
+                    self.landmark_pub.publish(PointStamped(
+                            header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
+                            point=Point(x=float(xi), y=float(upper_bound_y), z=0.0)
+                        ))
                     
                     frontier = check_cell(xi, upper_bound_y)
                     if frontier: 
                         self.get_logger().info("Frontera Encontrada")
 
                         frontiers.append(frontier)
-                        self.landmark_pub.publish(frontier)
+                        # self.landmark_pub.publish(frontier)
                 
     def count_unknown_neighbors(self, data, x, y):
         counter = 0

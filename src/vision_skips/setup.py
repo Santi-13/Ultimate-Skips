@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'camara_compressed_client = vision_skips.camara_compressed_client:main'
+            'camara_compressed_client = vision_skips.camara_compressed_client:main',
+            'travel_to_hazmat = vision_skips.travel_to_hazmat:main'
         ],
     },
 )

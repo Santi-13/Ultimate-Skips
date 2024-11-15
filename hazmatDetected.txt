@@ -1,0 +1,4 @@
+Hazmat detected: organic-peroxide at position (7.615258409792087, 7.508958573074934)
+Hazmat detected: flammable at position (7.615258409792087, 7.508958573074934)
+Hazmat detected: flammable-solid at position (7.615258409792087, 7.508958573074934)
+Hazmat detected: inhalation-hazard at position (7.615258409792087, 7.508958573074934)

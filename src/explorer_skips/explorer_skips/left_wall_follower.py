@@ -63,11 +63,17 @@ class ImprovedSimplePledgeAlgorithm(Node):
         if not self.save_map_cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().error('Servicio de guardado de mapa no disponible.')
             return
-
+        
+        # Obtener la ruta al directorio home
+        home_dir = os.path.expanduser('~')
+        # Crear el directorio maps en el home si no existe
+        maps_dir = os.path.join(home_dir, 'maps')
+        os.makedirs(maps_dir, exist_ok=True)
+        
         request = SaveMap.Request()
 
-        # Solo usar el nombre del mapa, sin directorio
-        map_name = f'map'
+        # Usar la ruta completa para el mapa
+        map_name = os.path.join(maps_dir, 'map')
 
         self.get_logger().info(f'Intentando guardar el mapa con nombre: {map_name}')
 
@@ -75,7 +81,7 @@ class ImprovedSimplePledgeAlgorithm(Node):
         string_msg = String()
         string_msg.data = map_name
 
-        request.name = string_msg  # Asignar el mensaje String al campo request.name
+        request.name = string_msg
 
         future = self.save_map_cli.call_async(request)
         future.add_done_callback(self.map_save_response_callback)

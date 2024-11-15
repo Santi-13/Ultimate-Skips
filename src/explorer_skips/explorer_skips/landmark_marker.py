@@ -35,8 +35,8 @@ class LandmarkMarker(Node):
 
         # Color del marcador
         marker.color.r = (0.05*self.no_of_markers) % 1.0
-        marker.color.g = 0.0
-        marker.color.b = 0.0
+        marker.color.g = (0.05*self.no_of_markers+0.33) % 1.0
+        marker.color.b = (0.05*self.no_of_markers+0.66) % 1.0
         marker.color.a = 1.0
 
         self.get_logger().info(f'Mark published at {marker.pose.position.x}, {marker.pose.position.y}')

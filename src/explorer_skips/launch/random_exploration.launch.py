@@ -1,6 +1,6 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription, ExecuteProcess
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 import os
 
@@ -21,13 +21,31 @@ def generate_launch_description():
             executable='rviz2',
             name='rviz2',
             arguments=['-d' + os.path.join(explorer_skips_dir, 'rviz', 'explore.rviz')]        
-            ),
+        ),
         # Nodo de map_server
         Node(
             package='nav2_map_server',
             executable='map_server',
             name='map_server',
             parameters=[{'yaml_filename': '/home/ubuntu/maps/map.yaml'}]
+        ),
+        # Cambiar el estado de map_server a 'configuring'
+        ExecuteProcess(
+            cmd=[
+                'ros2', 'service', 'call', '/map_server/change_state', 
+                'lifecycle_msgs/srv/ChangeState', 
+                "{transition: {id: 1, label: ''}}"
+            ],
+            shell=True
+        ),
+        # Cambiar el estado de map_server a 'active'
+        ExecuteProcess(
+            cmd=[
+                'ros2', 'service', 'call', '/map_server/change_state', 
+                'lifecycle_msgs/srv/ChangeState', 
+                "{transition: {id: 3, label: ''}}"
+            ],
+            shell=True
         ),
         # Nodo de SLAM Toolbox
         Node(

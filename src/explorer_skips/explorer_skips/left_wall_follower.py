@@ -36,7 +36,7 @@ class ImprovedSimplePledgeAlgorithm(Node):
         self.target_distance = 0.25
         self.front_target_distance = 0.2 
         self.turn_velocity = 0.40
-        self.forward_velocity = 0.05
+        self.forward_velocity = 0.025
         self.angle_tolerance = (45.0 * math.pi) / 180.0
         
         self.initial_orientation = None

@@ -20,7 +20,8 @@ class LandmarkMarker(Node):
         marker.header.stamp = self.get_clock().now().to_msg()
         marker.ns = "landmarks"
         marker.id = self.no_of_markers  # Deberías asignar un ID único si tienes múltiples marcadores
-        self.no_of_markers += 1
+        self.no_of_markers = ( self.no_of_markers + 1 ) % 20
+        marker.type = Marker.TEXT_VIEW_FACING
         marker.type = Marker.SPHERE
         marker.action = Marker.ADD
 
@@ -28,10 +29,12 @@ class LandmarkMarker(Node):
         marker.pose.position = msg.point
         marker.pose.orientation.w = 1.0
 
+        marker.text = str(marker.id)  # Reemplaza con tu etiqueta
+
         # Escala del marcador
-        marker.scale.x = 0.02
-        marker.scale.y = 0.02
-        marker.scale.z = 0.02
+        marker.scale.x = 0.04
+        marker.scale.y = 0.04
+        marker.scale.z = 0.04
 
         # Color del marcador
         marker.color.r = (0.05*self.no_of_markers) % 1.0
@@ -39,7 +42,7 @@ class LandmarkMarker(Node):
         marker.color.b = (0.05*self.no_of_markers+0.66) % 1.0
         marker.color.a = 1.0
 
-        self.get_logger().info(f'Mark published at {marker.pose.position.x}, {marker.pose.position.y}')
+        # self.get_logger().info(f'Mark published at {marker.pose.position.x}, {marker.pose.position.y}')
 
         # Publicar el marcador
         self.marker_publisher.publish(marker)

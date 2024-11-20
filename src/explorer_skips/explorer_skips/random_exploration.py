@@ -33,13 +33,13 @@ class RandomExploration(Node):
     def map_callback(self, msg):
         # Actualizar el mapa de ocupación
         self.occupancy_grid = msg
+        self.get_logger().info('Occupancy grid received!')
 
     def is_free(self, x, y):
-        # Verificar si la celda del mapa es libre
         if not self.occupancy_grid:
+            self.get_logger().warn('Occupancy grid not available yet.')
             return False
 
-        # Transformar coordenadas a índices del mapa
         width = self.occupancy_grid.info.width
         resolution = self.occupancy_grid.info.resolution
         origin_x = self.occupancy_grid.info.origin.position.x
@@ -54,7 +54,6 @@ class RandomExploration(Node):
         return False
 
     def is_within_radius(self, x, y):
-        # Verificar si el punto está dentro del radio mínimo
         for xi, yi in self.visited:
             d = math.sqrt((xi - x)**2 + (yi - y)**2)
             if d < RADIUS:
@@ -62,22 +61,18 @@ class RandomExploration(Node):
         return False
 
     def move_to(self, x, y):
-        # Generar un comando para mover el robot hacia (x, y)
         twist = Twist()
-        twist.linear.x = 0.2  # Velocidad hacia adelante
-        twist.angular.z = 0.0  # Puede modificarse para rotación si es necesario
+        twist.linear.x = 0.2
+        twist.angular.z = 0.0
         self.cmd_vel_publisher.publish(twist)
-
         self.get_logger().info(f'Moving to ({x:.2f}, {y:.2f})')
 
     def read_hazmat_file(self):
-        # Leer las posiciones de hazmats detectados desde el archivo
         try:
             with open(HAZMAT_FILE, 'r') as file:
                 lines = file.readlines()
                 for line in lines:
                     if "Hazmat detected:" in line:
-                        # Extraer la posición del hazmat
                         parts = line.split("position")
                         if len(parts) > 1:
                             pos = parts[1].strip().strip("()")
@@ -91,16 +86,14 @@ class RandomExploration(Node):
             self.get_logger().warn(f'File {HAZMAT_FILE} not found!')
 
     def explore(self):
-        # Leer archivo para actualizar hazmats detectados
         self.read_hazmat_file()
 
         if self.hazmats_detected >= TOTAL_HAZMATS:
             self.get_logger().info('Exploration complete!')
-            self.timer.cancel()  # Detener el timer
+            self.timer.cancel()
             return
 
-        # Generar coordenadas aleatorias
-        x = random.uniform(-10.0, 10.0)  # Ajustar rango según el mapa
+        x = random.uniform(-10.0, 10.0)
         y = random.uniform(-10.0, 10.0)
 
         if self.is_free(x, y) and not self.is_within_radius(x, y):

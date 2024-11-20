@@ -1,7 +1,6 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument, SetEnvironmentVariable
-from launch.substitutions import LaunchConfiguration
+from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 import os
 
@@ -16,7 +15,6 @@ def generate_launch_description():
     slam_params = os.path.join(explorer_skips_dir, 'config', 'slam_mapping.yaml')
 
     declared_arguments = []
-
 
     return LaunchDescription(declared_arguments + [
         Node(

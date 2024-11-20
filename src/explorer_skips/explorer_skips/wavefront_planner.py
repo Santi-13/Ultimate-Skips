@@ -379,7 +379,7 @@ class Explore(Node):
                             not in self.fringe:
 
                         if self.original_occupancy_grid_data[
-                            child_position_row][
+                            child_position_row-1][
                             child_position_column] == -1 and \
                                 far_away > 1.5:
                             if not is_frontier:

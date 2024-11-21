@@ -69,7 +69,7 @@ def generate_launch_description():
         ),
         # Nodo de exploración para encontrar simbolos 
         Node(
-            package='exploration_skips',
+            package='explorer_skips',
             executable='random_exploration',
             name='random_exploration'
         )

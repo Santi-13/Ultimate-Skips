@@ -144,7 +144,7 @@ controller_server:
       lookahead_dist: 0.6
       min_lookahead_dist: 0.3
       max_lookahead_dist: 0.9
-      lookahead_time: 1.5
+      lookahead_time: 2.5
       transform_tolerance: 0.1
       use_velocity_scaled_lookahead_dist: true
       min_approach_linear_velocity: 0.05
@@ -153,7 +153,7 @@ controller_server:
       max_allowed_time_to_collision_up_to_carrot: 1.0
 
       use_regulated_linear_velocity_scaling: true # Whether to use the regulated features for path curvature (e.g. slow on high curvature paths).
-      use_cost_regulated_linear_velocity_scaling: false # Whether to use the regulated features for proximity to obstacles (e.g. slow in close proximity to obstacles).
+      use_cost_regulated_linear_velocity_scaling: true # Whether to use the regulated features for proximity to obstacles (e.g. slow in close proximity to obstacles).
 
       regulated_linear_scaling_min_radius: 0.5
       regulated_linear_scaling_min_speed: 0.1
@@ -163,7 +163,7 @@ controller_server:
       # it is only used when rotating to heading (use_rotate_to_heading)
       # for some reason rotate_to_heading_angular_vel is ignored and robot rotates with
       # max_angular_accel/10. angular velocity (that's why it is set to higher value)
-      max_angular_accel: 3.2
+      max_angular_accel: 1.0
       rotate_to_heading_angular_vel: 1.8
       max_robot_pose_search_dist: 5.0
       use_interpolation: true
@@ -373,8 +373,8 @@ velocity_smoother:
     smoothing_frequency: 20.0            # Increased for smoother transitions
     scale_velocities: False
     feedback: "OPEN_LOOP"
-    max_velocity: [0.06, 0.0, 1.2]      # Max linear and angular velocities
-    mix_velocity: [-0.1, 0.0, -1.2]      # Min linear and angular velocities
+    max_velocity: [0.06, 0.0, 1.0]      # Max linear and angular velocities
+    mix_velocity: [-0.1, 0.0, -1.0]      # Min linear and angular velocities
     max_accel: [2.0, 0.0, 3.2]           # Adjusted for TurtleBot3
     max_decel: [-2.0, 0.0, -3.2]  
     # used in the CLOSED_LOOP feedback mode

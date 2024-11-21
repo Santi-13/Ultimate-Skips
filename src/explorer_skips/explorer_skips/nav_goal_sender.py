@@ -15,57 +15,63 @@ class NavGoalSender(Node):
             self.goal_callback,
             10
         )
-        
-    def goal_callback(self,msg):
+        self.current_goal_handle = None
+
+    def goal_callback(self, msg):
         x = msg.point.x
         y = msg.point.y
 
-        self.send_goal(x,y,0.0)
+        if self.current_goal_handle:
+            self.cancel_current_goal()
+        
+        self.send_goal(x, y, 0.0)
 
     def send_goal(self, position_x, position_y, orientation_z):
-        # Esperar a que el servidor de acción esté disponible
         while not self.nav_to_pose_client.wait_for_server(timeout_sec=1.0):
-            self.get_logger().info('Esperando al servidor de NavigateToPose...')
+            self.get_logger().info('Waiting for NavigateToPose action server...')
 
-        # Crear el mensaje de pose objetivo
         goal_msg = NavigateToPose.Goal()
         goal_msg.pose.header.frame_id = 'map'
         goal_msg.pose.header.stamp = self.get_clock().now().to_msg()
         
-        # Establecer la posición objetivo
         goal_msg.pose.pose.position.x = float(position_x)
         goal_msg.pose.pose.position.y = float(position_y)
         goal_msg.pose.pose.position.z = 0.0
         
-        # Establecer la orientación (usando quaternion simplificado)
         goal_msg.pose.pose.orientation.x = 0.0
         goal_msg.pose.pose.orientation.y = 0.0
         goal_msg.pose.pose.orientation.z = float(orientation_z)
         goal_msg.pose.pose.orientation.w = 1.0
 
-        self.get_logger().info('Enviando goal de navegación...')
+        self.get_logger().info('Sending navigation goal...')
         
-        # Enviar el goal y obtener el future
         send_goal_future = self.nav_to_pose_client.send_goal_async(goal_msg)
         rclpy.spin_until_future_complete(self, send_goal_future)
         
-        goal_handle = send_goal_future.result()
+        self.current_goal_handle = send_goal_future.result()
         
-        if not goal_handle.accepted:
-            self.get_logger().error('Goal rechazado')
+        if not self.current_goal_handle.accepted:
+            self.get_logger().error('Goal rejected')
+            self.current_goal_handle = None
             return
             
-        self.get_logger().info('Goal aceptado')
+        self.get_logger().info('Goal accepted')
         
-        # Obtener el resultado
-        result_future = goal_handle.get_result_async()
+        result_future = self.current_goal_handle.get_result_async()
         rclpy.spin_until_future_complete(self, result_future)
         
         status = result_future.result().status
         if status == 4:  # SUCCEEDED
-            self.get_logger().info('Goal alcanzado con éxito!')
+            self.get_logger().info('Goal reached successfully!')
         else:
-            self.get_logger().info(f'Navegación terminada con status: {status}')
+            self.get_logger().info(f'Navigation finished with status: {status}')
+        
+        self.current_goal_handle = None
+
+    def cancel_current_goal(self):
+        cancel_goal_future = self.current_goal_handle.cancel_goal_async()
+        rclpy.spin_until_future_complete(self, cancel_goal_future)
+        self.get_logger().info('Current goal canceled')
 
 def main():
     rclpy.init()

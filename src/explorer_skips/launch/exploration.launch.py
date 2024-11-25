@@ -51,13 +51,6 @@ def generate_launch_description():
            name='landmark_marker',
            output='screen'
         ),
-        # Nodo para nav goals
-        Node(
-           package='explorer_skips',
-           executable='nav_goal_sender',
-           name='nav_goal_sender',
-           output='screen'
-        ),
         # Tu nodo de exploración
         # Node(
         #    package='explorer_skips',

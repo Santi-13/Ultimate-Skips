@@ -25,7 +25,6 @@ setup(
     entry_points={
         'console_scripts': [
             'left_wall_follower = explorer_skips.left_wall_follower:main',
-            'nav_goal_sender = explorer_skips.nav_goal_sender:main',
             'frontier_analyzer = explorer_skips.frontier_analyzer:main',
             'wavefront_planner = explorer_skips.wavefront_planner:main',
             'landmark_marker = explorer_skips.landmark_marker:main', 

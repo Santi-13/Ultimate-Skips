@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import OccupancyGrid, Odometry
-from geometry_msgs.msg import Point, PointStamped
+from geometry_msgs.msg import Point, PointStamped, PoseStamped
 from std_msgs.msg import Header
 import numpy as np
 import math
@@ -11,79 +11,75 @@ class WavefrontPlanner(Node):
         super().__init__('wavefront_planner')
         self.map_sub = self.create_subscription(
             OccupancyGrid,
-            'map',
+            '/map',
             self.map_callback,
             10
         )
 
         self.pose_sub = self.create_subscription(
             Odometry,
-            'odom',
+            '/odom',
             self.pose_callback,
             10
         )
         
+        # self.goal_pub = self.create_publisher(
+        #     PointStamped,
+        #     '/unknown_frontier_goal',
+        #     10
+        # )
+
         self.goal_pub = self.create_publisher(
-            PointStamped,
-            'unknown_frontier_goal',
+            PoseStamped,
+            '/goal_pose',
             10
         )
 
         self.landmark_pub = self.create_publisher(
             PointStamped,
-            'landmarks',
+            '/landmarks',
             10
         )
 
         # No of unknown cells for a cluster to be considered a frontier
         self.min_unknown_cells = 5
 
-        self.goal_active = False
         self.current_position = None
-        self.goal_point = None
+        self.last_sent_goal = None
+
+    def pose_callback(self, msg):
+        # self.get_logger().info('Pose Callback')
+        self.current_position = msg.pose.pose.position
 
     def map_callback(self, msg):
         self.get_logger().info(f"Received OccupancyGrid with shape: {msg.info.width}x{msg.info.height}")
         
-        # Process the OccupancyGrid to find frontiers
-        frontiers = self.find_frontiers(msg)    
-
+        frontiers = self.find_frontiers(msg)
+        
         if frontiers:
-            closest = None
-            d_c = 0.0
+            closest = min(frontiers, key=lambda frontier: self.distance_to_robot(frontier.point))
+            
+            if not self.last_sent_goal or self.distance_between_goals(closest, self.last_sent_goal) > 0.1:
+                self.send_goal(closest)
+                self.last_sent_goal = closest
 
-            # Separate robot position components
-            x_r = self.current_position.x
-            y_r = self.current_position.y
+    def send_goal(self, point):
+    
+        msg = PoseStamped()
+        msg.header.frame_id = 'map'
+        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.pose.position.x = point.point.x
+        msg.pose.position.y = point.point.y
+        msg.pose.orientation.w = 1.0
+        
+        self.goal_pub.publish(msg)
+        self.get_logger().info(f'Sending goal to ({msg.pose.position.x}, {msg.pose.position.y})')
 
-            for frontier in frontiers:
-                # Frontier components
-                x_f = frontier.point.x
-                y_f = frontier.point.y
+    def distance_to_robot(self, point):
+        return math.sqrt((point.point.x - self.current_position.x)**2 + (point.point.y - self.current_position.y)**2)
 
-                # Distance to frontier point
-                d_f = np.sqrt( ( x_r - x_f )**2 + ( y_r - y_f )**2 )
-
-                if closest:
-                    # Distance to current closest frontier
-                    d_c = np.sqrt( ( x_r - closest.point.x )**2 + ( y_r - closest.point.y )**2 )
-
-                    if d_f < d_c:
-                        closest = frontier
-
-                    self.goal_pub.publish(frontier)
-
-                    self.get_logger().info(f'Navigating to closest frontier ({closest.point.x}, {closest.point.y})')
-                    self.get_logger().info(f'=======================')
-                else:
-                    self.goal_pub.publish(frontier)
-                    
-                    closest = frontier
-
- 
-    def pose_callback(self, msg):
-        # self.get_logger().info('Pose Callback')
-        self.current_position = msg.pose.pose.position
+    def distance_between_goals(self, goal1, goal2):
+        return math.sqrt((goal1.point.x - goal2.point.x)**2 + (goal1.point.y - goal2.point.y)**2)    
 
     def find_frontiers(self, occupancy_grid):
         # Uses wavefront planning to find the frontiers by searching around the robot
@@ -91,7 +87,7 @@ class WavefrontPlanner(Node):
         data = np.array(occupancy_grid.data).reshape((occupancy_grid.info.height, occupancy_grid.info.width))
 
         # Number of radius around the robot
-        n = 5
+        n = 8
 
         if self.current_position is not None:
             # Current Robot Position

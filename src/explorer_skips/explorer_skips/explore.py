@@ -76,7 +76,7 @@ class WavefrontPlanner(Node):
         self.get_logger().info(f'Sending goal to ({msg.pose.position.x}, {msg.pose.position.y})')
 
     def distance_to_robot(self, point):
-        return math.sqrt((point.point.x - self.current_position.x)**2 + (point.point.y - self.current_position.y)**2)
+        return math.sqrt((point.x - self.current_position.x)**2 + (point.y - self.current_position.y)**2)
 
     def distance_between_goals(self, goal1, goal2):
         return math.sqrt((goal1.point.x - goal2.point.x)**2 + (goal1.point.y - goal2.point.y)**2)    

@@ -21,7 +21,8 @@ setup(
     entry_points={
         'console_scripts': [
             'camara_compressed_client = vision_skips.camara_compressed_client:main',
-            'travel_to_hazmat = vision_skips.travel_to_hazmat:main'
+            'travel_to_hazmat = vision_skips.travel_to_hazmat:main',
+            'landmark_navigator = vision_skips.landmark_navigator:main'
         ],
     },
 )

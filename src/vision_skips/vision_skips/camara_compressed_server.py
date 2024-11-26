@@ -59,7 +59,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     scores = detection[5:]
                     class_id = np.argmax(scores)
                     confidence = scores[class_id]
-                    if confidence > 0.5:
+                    if confidence > 0.8:  # Filtrar detecciones con confianza >= 0.8
                         box = detection[0:4] * np.array([w, h, w, h])
                         (center_x, center_y, width, height) = box.astype("int")
                         x, y = int(center_x - width / 2), int(center_y - height / 2)
@@ -67,6 +67,10 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         confidences.append(float(confidence))
                         class_ids.append(class_id)
                         detected_labels.append(labels[class_id])  # Agregar el nombre del objeto detectado
+
+                        # Imprimir información del bounding box en la consola
+                        print(f"Detected '{labels[class_id]}' with confidence {confidence:.2f}")
+                        print(f"Bounding Box - X: {x}, Y: {y}, Width: {width}px, Height: {height}px")
 
             indices = cv.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
 
@@ -78,7 +82,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
                 color_box = [int(c) for c in np.random.randint(0, 255, size=(3,))]
                 cv.rectangle(color, (x, y), (x + w, y + h), color_box, 2)
-                text = f"{labels[class_ids[idx]]}: {confidences[idx]:.2f}"
+                text = f"{labels[class_ids[idx]]}: {confidences[idx]:.2f}, W:{w}px H:{h}px"
                 cv.putText(color, text, (x, y - 5), cv.FONT_HERSHEY_SIMPLEX, 0.5, color_box, 2)
 
             # Enviar el número de etiquetas detectadas

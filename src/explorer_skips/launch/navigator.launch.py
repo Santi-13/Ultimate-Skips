@@ -49,7 +49,11 @@ def generate_launch_description():
         # Lanzar Navigation2 con inicialización del mapa
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(nav2_bringup_dir, 'launch', 'navigation_launch.py')),
-            launch_arguments={'params_file': nav2_params, 'output': 'log'}.items(),
+            launch_arguments={
+                'params_file': nav2_params,
+                'map': map_file,  # Agrega el mapa
+                'use_sim_time': 'false'
+            }.items() 
         ),
         # Nodo para marcadores
         Node(

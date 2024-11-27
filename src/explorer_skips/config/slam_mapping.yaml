@@ -12,7 +12,7 @@ slam_toolbox:
     odom_frame: odom
     map_frame: map
     base_frame: base_footprint  # Changed from base_link to base_footprint for TurtleBot3
-    scan_topic: /scan_filtered            # Removed leading slash for best practices
+    scan_topic: /scan            # Removed leading slash for best practices
     mode: mapping  # or 'localization' if needed
 
     debug_logging: true

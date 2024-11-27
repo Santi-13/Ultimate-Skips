@@ -43,10 +43,11 @@ class WavefrontPlanner(Node):
 
         # No of unknown cells for a cluster to be considered a frontier
         self.min_unknown_cells = 5
+        self.min_free_neighbors = 2  # Required number of free cell neighbors
 
         self.current_position = None
         self.last_sent_goal = None
-        self.minimum_frontier_distance = 0.2  # Adjust this value as needed
+        self.minimum_frontier_distance = 0.5  # Adjust this value as needed
 
     def pose_callback(self, msg):
         # self.get_logger().info('Pose Callback')
@@ -232,15 +233,18 @@ class WavefrontPlanner(Node):
             self.get_logger().info("No robot position available")
                 
     def is_frontier_cell(self, data, x, y):
-        # A frontier cell is unknown (-1) and adjacent to at least one free cell (0)
+        # A frontier cell is unknown (-1) and adjacent to at least min_free_neighbors free cells (0)
+        free_neighbor_count = 0
         for dx in [-1, 0, 1]:
             for dy in [-1, 0, 1]:
-                nx, ny = x + dx, y + dy
                 if dx == 0 and dy == 0:
-                    continue
+                    continue  # Skip the current cell
+                nx, ny = x + dx, y + dy
                 if 0 <= nx < data.shape[1] and 0 <= ny < data.shape[0]:
                     if data[ny][nx] == 0:
-                        return True
+                        free_neighbor_count += 1
+                        if free_neighbor_count >= self.min_free_neighbors:
+                            return True
         return False
 
 def main():

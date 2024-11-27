@@ -29,10 +29,10 @@ def generate_launch_description():
             package='rviz2',
             executable='rviz2',
             name='rviz2',
-            arguments=['-d', rviz_config]
-        ),
-        # Nodo de filtro de láser
-        Node(
+            arguments=['-d' + os.path.join(explorer_skips_dir, 'rviz', 'explore.rviz')]        
+            ),
+        # Nodo de laser filters
+         Node(
             package='explorer_skips',
             executable='laser_scan_filter_node',
             name='laser_scan_filter_node',
@@ -49,17 +49,20 @@ def generate_launch_description():
         # Lanzar Navigation2 con inicialización del mapa
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(nav2_bringup_dir, 'launch', 'navigation_launch.py')),
-            launch_arguments={
-                'params_file': nav2_params,
-                'map': map_file,  # Agrega el mapa
-                'use_sim_time': 'false'
-            }.items()
+            launch_arguments={'params_file': nav2_params, 'output': 'log'}.items(),
         ),
         # Nodo para marcadores
         Node(
-            package='explorer_skips',
-            executable='landmark_marker',
-            name='landmark_marker',
-            output='screen'
-        )
+           package='explorer_skips',
+           executable='landmark_marker',
+           name='landmark_marker',
+           output='screen'
+        ),
+        # Tu nodo de exploración
+        # Node(
+        #    package='explorer_skips',
+        #    executable='wavefront_planner',
+        #    name='wavefront_planner',
+        #    output='screen'
+        # )
     ])

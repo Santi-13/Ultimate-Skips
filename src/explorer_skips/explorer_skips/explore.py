@@ -57,12 +57,13 @@ class WavefrontPlanner(Node):
         
         frontiers = self.find_frontiers(msg)
 
-        frontiers = [
-            frontier for frontier in frontiers
-            if self.distance_to_robot(frontier.point) > self.minimum_frontier_distance
-        ]
+        
         
         if frontiers:
+            frontiers = [
+                frontier for frontier in frontiers
+                if self.distance_to_robot(frontier.point) > self.minimum_frontier_distance
+            ]
             closest = min(frontiers, key=lambda frontier: self.distance_to_robot(frontier.point))
             
             if not self.last_sent_goal or self.distance_between_goals(closest, self.last_sent_goal) > 0.1:

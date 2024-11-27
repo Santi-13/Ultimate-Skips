@@ -46,6 +46,7 @@ class WavefrontPlanner(Node):
 
         self.current_position = None
         self.last_sent_goal = None
+        self.minimum_frontier_distance = 0.2  # Adjust this value as needed
 
     def pose_callback(self, msg):
         # self.get_logger().info('Pose Callback')
@@ -55,6 +56,11 @@ class WavefrontPlanner(Node):
         self.get_logger().info(f"Received OccupancyGrid with shape: {msg.info.width}x{msg.info.height}")
         
         frontiers = self.find_frontiers(msg)
+
+        frontiers = [
+            frontier for frontier in frontiers
+            if self.distance_to_robot(frontier.point) > self.minimum_frontier_distance
+        ]
         
         if frontiers:
             closest = min(frontiers, key=lambda frontier: self.distance_to_robot(frontier.point))
@@ -62,6 +68,9 @@ class WavefrontPlanner(Node):
             if not self.last_sent_goal or self.distance_between_goals(closest, self.last_sent_goal) > 0.1:
                 self.send_goal(closest)
                 self.last_sent_goal = closest
+
+        else:
+            self.get_logger().info("Exploration completed - no more frontiers found")
 
     def send_goal(self, point):
     
@@ -81,6 +90,12 @@ class WavefrontPlanner(Node):
     def distance_between_goals(self, goal1, goal2):
         return math.sqrt((goal1.point.x - goal2.point.x)**2 + (goal1.point.y - goal2.point.y)**2)    
 
+    def check_cell(self, x, y, width, height, data):
+        if 0 <= x < width and 0 <= y < height:
+            if data[y][x] == -1 and self.is_frontier_cell(data, x, y):
+                return True
+        return False
+    
     def find_frontiers(self, occupancy_grid):
         # Uses wavefront planning to find the frontiers by searching around the robot
         # Convert the 1D data array into a 2D numpy array
@@ -98,30 +113,6 @@ class WavefrontPlanner(Node):
             
             grid_x = int((x - occupancy_grid.info.origin.position.x) / resolution)
             grid_y = int((y - occupancy_grid.info.origin.position.y) / resolution)
-
-            def check_cell(x, y, width, height):
-                if 0 <= x < width and 0 <= y < height:
-                    if data[y][x] == -1:
-                        # a = (x + 0.5) * resolution + occupancy_grid.info.origin.position.x
-                        # b = (y + 0.5) * resolution + occupancy_grid.info.origin.position.y
-
-                        # self.get_logger().info(f'Unknown cell detected on:')
-                        # self.get_logger().info(f'grid ({x}, {y})')
-                        # self.get_logger().info(f'World ({a}, {b})')
-                        # self.get_logger().info(f'In map, cell value is ({data[y][x]})')
-                        # self.get_logger().info(f'=======================')
-
-                        # frontier = PointStamped(
-                        #         header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
-                        #         point=Point(x=float(a), y=float(b), z=0.0)
-                        #     )
-                        # self.landmark_pub.publish(frontier)
-
-                        if self.count_unknown_neighbors(data, x, y) >= self.min_unknown_cells:
-                            return True
-                    return False
-                # else:
-                    # self.get_logger().info("Robot position is outside the map bounds")
 
             # Frontiers array
             frontiers = []
@@ -167,7 +158,7 @@ class WavefrontPlanner(Node):
                     #         point=Point(x=float(x-x_radius), y=float(temp_robot_y), z=0.0)
                     #     ))
 
-                    if check_cell(grid_x-grid_x_radius, yi,occupancy_grid.info.width,occupancy_grid.info.height):
+                    if self.check_cell(grid_x-grid_x_radius, yi,occupancy_grid.info.width,occupancy_grid.info.height, data):
                         frontier = PointStamped(
                                     header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
                                     point=Point(x=float(x-x_radius), y=float(temp_robot_y), z=0.0)
@@ -182,7 +173,7 @@ class WavefrontPlanner(Node):
                     #         point=Point(x=float(x+x_radius), y=float(temp_robot_y), z=0.0)
                     #     ))
                     
-                    if check_cell(grid_x+grid_x_radius, yi,occupancy_grid.info.width,occupancy_grid.info.height):
+                    if self.check_cell(grid_x+grid_x_radius, yi,occupancy_grid.info.width,occupancy_grid.info.height, data):
                         frontier = PointStamped(
                                     header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
                                     point=Point(x=float(x+x_radius), y=float(temp_robot_y), z=0.0)
@@ -195,7 +186,7 @@ class WavefrontPlanner(Node):
                 for xi in range(-segment_half+grid_x, segment_half+grid_x+1):
 
                     
-                    temp_robot_x = (xi + 0.0) * resolution + occupancy_grid.info.origin.position.x
+                    temp_robot_x = (xi + 0.50) * resolution + occupancy_grid.info.origin.position.x
                     # self.get_logger().info(f'checking grid ({xi}, {grid_y-grid_y_radius})')
                     # self.get_logger().info(f'Marker on ({temp_robot_x}, {y-y_radius})')
                     # self.get_logger().info(f'In map, cell value is ({data[grid_y-grid_y_radius][xi]})')
@@ -210,7 +201,7 @@ class WavefrontPlanner(Node):
                     #         point=Point(x=float(temp_robot_x), y=float(y-y_radius), z=0.0)
                     #     ))
                     
-                    if check_cell(xi, grid_y-grid_y_radius,occupancy_grid.info.width,occupancy_grid.info.height):
+                    if self.check_cell(xi, grid_y-grid_y_radius,occupancy_grid.info.width,occupancy_grid.info.height, data):
                         frontier = PointStamped(
                                     header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
                                     point=Point(x=float(temp_robot_x), y=float(y-y_radius), z=0.0)
@@ -225,7 +216,7 @@ class WavefrontPlanner(Node):
                     #         point=Point(x=float(temp_robot_x), y=float(y+y_radius), z=0.0)
                     #     ))
                     
-                    if check_cell(xi, grid_y+grid_y_radius,occupancy_grid.info.width,occupancy_grid.info.height):
+                    if self.check_cell(xi, grid_y+grid_y_radius,occupancy_grid.info.width,occupancy_grid.info.height, data):
                         frontier = PointStamped(
                                     header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
                                     point=Point(x=float(temp_robot_x), y=float(y+y_radius), z=0.0)
@@ -239,28 +230,17 @@ class WavefrontPlanner(Node):
         else:
             self.get_logger().info("No robot position available")
                 
-    def count_unknown_neighbors(self, data, x, y):
-        counter = 0
+    def is_frontier_cell(self, data, x, y):
+        # A frontier cell is unknown (-1) and adjacent to at least one free cell (0)
         for dx in [-1, 0, 1]:
             for dy in [-1, 0, 1]:
-                if dx != 0 or dy != 0:
-                    nx, ny = x + dx, y + dy
-
-                    if 0 <= nx < data.shape[1] and 0 <= ny < data.shape[0]:
-                        # self.get_logger().info(f'AAAAAAAA: {nx}')
-                        # self.get_logger().info(f'BBBBBBBB: {data.shape[0]}')
-                        # self.get_logger().info(f'Neighboring:')
-                        # self.get_logger().info(f'grid ({nx}, {ny})')
-                        # self.get_logger().info(f'In map, cell value is ({data[ny][nx]})')
-                        # self.get_logger().info(f'=======================')
-                        if data[ny][nx] == -1:
-                            counter += 1
-                        elif data[ny][nx] == 100:
-                            counter = 0
-                            # self.get_logger().info(f'Vecinos tienen celda ocupada, frontera no valida')
-                            return counter
-        # self.get_logger().info(f'Numero de vecinos desconocidos son {counter}')
-        return counter
+                nx, ny = x + dx, y + dy
+                if dx == 0 and dy == 0:
+                    continue
+                if 0 <= nx < data.shape[1] and 0 <= ny < data.shape[0]:
+                    if data[ny][nx] == 0:
+                        return True
+        return False
 
 def main():
     rclpy.init()

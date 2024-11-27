@@ -13,7 +13,7 @@ def generate_launch_description():
     # Define launch arguments
     nav2_params = os.path.join(explorer_skips_dir, 'config', 'navigation.yaml')
     #nav2_params = os.path.join(explorer_skips_dir, 'config', 'nav2_params.yaml')
-    slam_params = os.path.join(explorer_skips_dir, 'config', 'slam_mapping.yaml')
+    slam_params = os.path.join(explorer_skips_dir, 'config', 'slam_localization.yaml')
 
     declared_arguments = []
 

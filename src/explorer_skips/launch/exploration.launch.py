@@ -13,6 +13,7 @@ def generate_launch_description():
     # Define launch arguments
     nav2_params = os.path.join(explorer_skips_dir, 'config', 'navigation.yaml')
     #nav2_params = os.path.join(explorer_skips_dir, 'config', 'nav2_params.yaml')
+    laser_filter_params = os.path.join(explorer_skips_dir, 'config', 'laser_filter.yaml')
     slam_params = os.path.join(explorer_skips_dir, 'config', 'slam_mapping.yaml')
 
     declared_arguments = []
@@ -31,6 +32,18 @@ def generate_launch_description():
             name='rviz2',
             arguments=['-d' + os.path.join(explorer_skips_dir, 'rviz', 'explore.rviz')]        
             ),
+        # Nodo de laser filters
+         Node(
+            package='laser_filters',
+            executable='scan_to_scan_filter_chain',
+            name='laser_filter_node',
+            output='screen',
+            parameters=[laser_filter_params],
+            remappings=[
+                ('/scan', '/scan'),
+                ('/scan_filtered', '/scan_filtered')
+            ]
+        ),
         # Nodo de SLAM Toolbox
         Node(
             package='slam_toolbox',

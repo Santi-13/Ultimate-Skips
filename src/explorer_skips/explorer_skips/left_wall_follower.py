@@ -33,7 +33,7 @@ class ImprovedSimplePledgeAlgorithm(Node):
         )
         
         self.twist = Twist()
-        self.target_distance = 0.25
+        self.target_distance = 0.35
         self.front_target_distance = 0.2 
         self.turn_velocity = 0.40
         self.forward_velocity = 0.025

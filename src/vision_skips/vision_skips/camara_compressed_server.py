@@ -33,13 +33,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         print(f"Conectado por {addr}")
         b_imagen = bytearray()
         with conn:
-            # Leer tamaño de imagen
             data = conn.recv(4)
-            if not data:
-                continue
             img_size = int.from_bytes(data, byteorder="little")
-
-            # Leer datos de imagen
+            b_imagen += data[4:]
             while len(b_imagen) < img_size:
                 data = conn.recv(4096)
                 if not data:
@@ -72,6 +68,10 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         class_ids.append(class_id)
                         detected_labels.append(labels[class_id])  # Agregar el nombre del objeto detectado
 
+                        # Imprimir información del bounding box en la consola
+                        print(f"Detected '{labels[class_id]}' with confidence {confidence:.2f}")
+                        print(f"Bounding Box - X: {x}, Y: {y}, Width: {width}px, Height: {height}px")
+
             indices = cv.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
 
             # Dibujar las detecciones en la imagen
@@ -79,19 +79,23 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 idx = i[0] if isinstance(i, (list, tuple)) else i
                 (x, y) = (boxes[idx][0], boxes[idx][1])
                 (w, h) = (boxes[idx][2], boxes[idx][3])
+
                 color_box = [int(c) for c in np.random.randint(0, 255, size=(3,))]
                 cv.rectangle(color, (x, y), (x + w, y + h), color_box, 2)
                 text = f"{labels[class_ids[idx]]}: {confidences[idx]:.2f}, W:{w}px H:{h}px"
                 cv.putText(color, text, (x, y - 5), cv.FONT_HERSHEY_SIMPLEX, 0.5, color_box, 2)
 
-            # Enviar datos como JSON-like formato binario
-            data_dict = {
-                "labels": detected_labels,
-                "image": cv.imencode('.jpg', color)[1].tobytes()
-            }
-            
-            # Convertir datos en binario y enviarlos
-            import pickle
-            serialized_data = pickle.dumps(data_dict)
-            conn.sendall(len(serialized_data).to_bytes(4, byteorder="little"))
-            conn.sendall(serialized_data)
+            # Enviar el número de etiquetas detectadas
+            conn.sendall(len(detected_labels).to_bytes(4, byteorder="little"))
+
+            # Enviar cada etiqueta como texto
+            for label in detected_labels:
+                label_bytes = label.encode('utf-8')
+                conn.sendall(len(label_bytes).to_bytes(4, byteorder="little"))  # Enviar el tamaño del texto
+                conn.sendall(label_bytes)  # Enviar el texto
+
+            # Codificar y enviar la imagen procesada
+            _, img_enc = cv.imencode('.jpg', color)
+            img_data = img_enc.tobytes()
+            conn.sendall(len(img_data).to_bytes(4, byteorder="little"))
+            conn.sendall(img_data)

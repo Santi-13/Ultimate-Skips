@@ -123,7 +123,7 @@ class CameraClientNode(Node):
                             if not is_near_existing:
                                 # Si no está cerca de una posición guardada con el mismo tipo de hazmat, lo guarda
                                 with open("hazmatDetected.txt", "a") as file:
-                                    file.write(f"Hazmat detected: {label}, Position: x={x}, y={y}, theta={theta}\n")
+                                    file.write(f"{label},{x},{y}\n")
                                 self.saved_positions.append(((x, y), label))  # Guarda la posición y etiqueta
                                 self.get_logger().info(f"Hazmat reliably detected and recorded: {label} at position (x={x}, y={y}, theta={theta})")
 

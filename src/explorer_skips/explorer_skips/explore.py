@@ -233,7 +233,8 @@ class WavefrontPlanner(Node):
             self.get_logger().info("No robot position available")
                 
     def is_frontier_cell(self, data, x, y):
-        # A frontier cell is unknown (-1) and adjacent to at least min_free_neighbors free cells (0)
+        # A frontier cell is unknown (-1), adjacent to at least min_free_neighbors free cells (0),
+        # and not adjacent to any occupied cells (100)
         free_neighbor_count = 0
         for dx in [-1, 0, 1]:
             for dy in [-1, 0, 1]:
@@ -241,11 +242,13 @@ class WavefrontPlanner(Node):
                     continue  # Skip the current cell
                 nx, ny = x + dx, y + dy
                 if 0 <= nx < data.shape[1] and 0 <= ny < data.shape[0]:
-                    if data[ny][nx] == 0:
+                    neighbor_value = data[ny][nx]
+                    if neighbor_value == 0:
                         free_neighbor_count += 1
-                        if free_neighbor_count >= self.min_free_neighbors:
-                            return True
-        return False
+                    elif neighbor_value == 100:
+                        # Adjacent to an occupied cell, so invalid frontier
+                        return False
+        return free_neighbor_count >= self.min_free_neighbors
 
 def main():
     rclpy.init()

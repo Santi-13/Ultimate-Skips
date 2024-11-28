@@ -3,7 +3,8 @@ from rclpy.node import Node
 import random
 import math
 from nav_msgs.msg import OccupancyGrid, Odometry
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, PointStamped, Point
+from std_msgs.msg import Header
 from tf_transformations import quaternion_from_euler
 
 TOTAL_HAZMATS = 4  # Número total de hazmats a detectar
@@ -33,6 +34,12 @@ class RandomExploration(Node):
         # Timer para ejecutar el loop principal
         self.timer = self.create_timer(0.1, self.explore)
 
+        self.landmark_pub = self.create_publisher(
+            PointStamped,
+            '/landmarks',
+            10
+        )
+
         # Variables para almacenar la posición y orientación actuales
         self.current_x = 0.0
         self.current_y = 0.0
@@ -46,9 +53,16 @@ class RandomExploration(Node):
         self.goal_active = False
 
     def map_callback(self, msg):
+        self.get_logger().info("AAA")
         # Actualizar el mapa de ocupación
         self.occupancy_grid = msg
         self.get_logger().info('Occupancy grid received!')
+        
+        # Publish coordinates of the dock
+        self.landmark_pub.publish(PointStamped(
+                                    header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
+                                    point=Point(x=float(9.5), y=float(5.0), z=0.0)
+                                ))
 
         # Inicializar covered_data como una matriz 2D de ceros
         width = self.occupancy_grid.info.width
@@ -143,6 +157,8 @@ class RandomExploration(Node):
             return 0
 
     def explore(self):
+        
+        
         # Verificar si se ha recibido el mapa
         if not self.occupancy_grid:
             self.get_logger().warn('Occupancy grid not received yet.')

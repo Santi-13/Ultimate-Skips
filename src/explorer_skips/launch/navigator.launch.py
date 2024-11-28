@@ -19,11 +19,17 @@ def generate_launch_description():
         # Static transform from 'odom' to 'base_link'
         Node(
             package='tf2_ros',
+            namespace='scan_to_map',
             executable='static_transform_publisher',
-            name='static_transform_odom_to_base',
-            arguments=["0", "0", "0", "0", "0", "0", "odom", "base_link"]
+            arguments=["0", "0", "0", "0", "0", "0", "map", "scan"]
         ),
-
+        # Nodo para marcadores
+        Node(
+           package='explorer_skips',
+           executable='landmark_marker',
+           name='landmark_marker',
+           output='screen'
+        ),
         # RViz node
         Node(
             package='rviz2',
@@ -32,7 +38,7 @@ def generate_launch_description():
             arguments=['-d', rviz_config],
             output='screen'
         ),
-
+        
         # Navigation2 Bringup
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(nav2_bringup_dir, 'launch', 'bringup_launch.py')),

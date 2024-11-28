@@ -5,6 +5,12 @@ from geometry_msgs.msg import Point, PointStamped, PoseStamped
 from std_msgs.msg import Header
 import numpy as np
 import math
+from slam_toolbox.srv import SaveMap
+import os
+from std_msgs.msg import String 
+from geometry_msgs.msg import Twist
+from rclpy.callback_groups import ReentrantCallbackGroup
+
 
 class WavefrontPlanner(Node):
     def __init__(self):
@@ -21,6 +27,12 @@ class WavefrontPlanner(Node):
             '/odom',
             self.pose_callback,
             10
+        )
+
+        self.save_map_cli = self.create_client(
+            SaveMap,
+            'slam_toolbox/save_map',
+            callback_group=self.callback_group
         )
         
         # self.goal_pub = self.create_publisher(
@@ -41,6 +53,8 @@ class WavefrontPlanner(Node):
             10
         )
 
+        self.cmd_pub = self.create_publisher(Twist, 'cmd_vel', 10)
+
         # No of unknown cells for a cluster to be considered a frontier
         self.min_unknown_cells = 5
         self.min_free_neighbors = 2  # Required number of free cell neighbors
@@ -48,6 +62,10 @@ class WavefrontPlanner(Node):
         self.current_position = None
         self.last_sent_goal = None
         self.minimum_frontier_distance = 0.5  # Adjust this value as needed
+        self.stop = False
+        self.save_map_requested = False
+
+        self.timer = self.create_timer(0.1, self.timer_callback)
 
     def pose_callback(self, msg):
         # self.get_logger().info('Pose Callback')
@@ -73,6 +91,16 @@ class WavefrontPlanner(Node):
 
         else:
             self.get_logger().info("Exploration completed - no more frontiers found")
+            self.stop = True
+            self.save_map_requested = True  # Solicitar guardado de mapa
+
+            # Detener el robot
+            stop_twist = Twist()
+            stop_twist.linear.x = 0.0
+            stop_twist.angular.z = 0.0
+            self.cmd_pub.publish(stop_twist)
+
+            self.get_logger().info("Robot detenido y guardando mapa UwU.")
 
     def send_goal(self, point):
     
@@ -97,6 +125,51 @@ class WavefrontPlanner(Node):
             if data[y][x] == -1 and self.is_frontier_cell(data, x, y):
                 return True
         return False
+    
+    def save_map(self):
+        from ament_index_python.packages import get_package_share_directory
+
+        if not self.save_map_cli.wait_for_service(timeout_sec=1.0):
+            self.get_logger().error('Servicio de guardado de mapa no disponible.')
+            return
+        
+        explorer_skips_dir = get_package_share_directory('explorer_skips')
+        # Crear el directorio maps en el home si no existe
+        maps_dir = os.path.join(explorer_skips_dir, 'maps')
+        os.makedirs(maps_dir, exist_ok=True)
+        
+        request = SaveMap.Request()
+
+        # Usar la ruta completa para el mapa
+        map_name = os.path.join(maps_dir, 'map')
+
+        self.get_logger().info(f'Intentando guardar el mapa con nombre: {map_name}')
+
+        # Crear el mensaje String y asignar el nombre del mapa
+        string_msg = String()
+        string_msg.data = map_name
+
+        request.name = string_msg
+
+        future = self.save_map_cli.call_async(request)
+        future.add_done_callback(self.map_save_response_callback)
+
+    def map_save_response_callback(self, future):
+        try:
+            response = future.result()
+            if response.result:
+                self.get_logger().info('Mapa guardado exitosamente.')
+            else:
+                self.get_logger().error('Error al guardar el mapa. El servicio respondió con result=False.')
+        except Exception as e:
+            self.get_logger().error(f'Excepción al guardar el mapa: {str(e)}')
+
+    def timer_callback(self):
+        if self.stop:
+            if self.save_map_requested:
+                self.save_map()
+                self.save_map_requested = False  # Restablecer la solicitud
+            return
     
     def find_frontiers(self, occupancy_grid):
         # Uses wavefront planning to find the frontiers by searching around the robot

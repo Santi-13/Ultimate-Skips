@@ -40,7 +40,7 @@ class CameraClientNode(Node):
         self.get_logger().info("Camera client node initialized and ready.")
 
         # Configuración de la deque para filtrado de etiquetas
-        self.hazmat_queue = deque(maxlen=20)  # almacena hasta 20 etiquetas recientes
+        self.hazmat_queue = deque(maxlen=5)  # almacena hasta 20 etiquetas recientes
         self.hazmat_labels = set(["hazmat", "chemical", "flammable", "toxic", "corrosive",
                                   "infectious-substance", "spontaneously-combustible", "inhalation-hazard", 
                                   "radioactive", "explosive", "organic-peroxide", "non-flammable-gas",

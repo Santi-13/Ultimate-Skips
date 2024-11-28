@@ -238,7 +238,7 @@ controller_server:
     controller_frequency: 20.0
     min_x_velocity_threshold: 0.02
     min_y_velocity_threshold: 0.02
-    min_theta_velocity_threshold: 0.001
+    min_theta_velocity_threshold: 0.2
     progress_checker_plugins: ["progress_checker"]
     goal_checker_plugins: ["goal_checker"]
     controller_plugins: ["FollowPath"]
@@ -276,9 +276,10 @@ controller_server:
       regulated_linear_scaling_min_speed: 0.1   # Ensures forward motion
       use_rotate_to_heading: true
       allow_reversing: false
-      rotate_to_heading_min_angle: 0.785  # Approximately 45 degrees
+      rotate_to_heading_min_angle: 0.3  # Approximately 45 degrees
       max_angular_accel: 0.5              # Balanced turning rate
       max_robot_pose_search_dist: 10.0
+      interpolate_curvature_after_goal: true
 
 controller_server_rclcpp_node:
   ros__parameters:

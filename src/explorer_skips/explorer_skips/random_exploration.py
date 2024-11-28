@@ -3,7 +3,8 @@ from rclpy.node import Node
 import random
 import math
 from nav_msgs.msg import OccupancyGrid, Odometry
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import PoseStamped
+from tf_transformations import quaternion_from_euler
 
 TOTAL_HAZMATS = 4  # Número total de hazmats a detectar
 RADIUS = 1.0  # Radio de distancia mínima entre puntos visitados
@@ -26,8 +27,8 @@ class RandomExploration(Node):
         self.odom_subscriber = self.create_subscription(
             Odometry, '/odom', self.odom_callback, 10)
 
-        # Publicador para mover el robot
-        self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
+        # Publisher to send navigation goals
+        self.goal_publisher = self.create_publisher(PoseStamped, '/goal_pose', 10)
 
         # Timer para ejecutar el loop principal
         self.timer = self.create_timer(0.1, self.explore)
@@ -40,6 +41,9 @@ class RandomExploration(Node):
         # Variables para el objetivo actual
         self.goal_x = None
         self.goal_y = None
+
+        # Flag to track if a goal is active
+        self.goal_active = False
 
     def map_callback(self, msg):
         # Actualizar el mapa de ocupación
@@ -74,18 +78,29 @@ class RandomExploration(Node):
             self.get_logger().warn('Occupancy grid not available yet.')
             return False
 
-        width = self.occupancy_grid.info.width
-        resolution = self.occupancy_grid.info.resolution
-        origin_x = self.occupancy_grid.info.origin.position.x
-        origin_y = self.occupancy_grid.info.origin.position.y
-
-        map_x = int((x - origin_x) / resolution)
-        map_y = int((y - origin_y) / resolution)
-        index = map_y * width + map_x
+        map_x, map_y = self.world_to_map(x, y)
+        index = map_y * self.occupancy_grid.info.width + map_x
 
         if 0 <= index < len(self.occupancy_grid.data):
             return self.occupancy_grid.data[index] == 0
         return False
+    
+    def world_to_map(self, x, y):
+        origin_x = self.occupancy_grid.info.origin.position.x
+        origin_y = self.occupancy_grid.info.origin.position.y
+        resolution = self.occupancy_grid.info.resolution
+        map_x = int((x - origin_x) / resolution)
+        map_y = int((y - origin_y) / resolution)
+        return map_x, map_y
+
+    def map_to_world(self, map_x, map_y):
+        origin_x = self.occupancy_grid.info.origin.position.x
+        origin_y = self.occupancy_grid.info.origin.position.y
+        resolution = self.occupancy_grid.info.resolution
+        x = (map_x + 0.5) * resolution + origin_x
+        y = (map_y + 0.5) * resolution + origin_y
+        return x, y
+    
 
     def is_within_radius(self, x, y):
         for xi, yi in self.visited:
@@ -93,43 +108,30 @@ class RandomExploration(Node):
             if d < RADIUS:
                 return True
         return False
+    
+    def is_covered(self, x, y):
+        map_x, map_y = self.world_to_map(x, y)
+        if 0 <= map_x < self.occupancy_grid.info.width and 0 <= map_y < self.occupancy_grid.info.height:
+            return self.covered_data[map_y][map_x] == 1
+        return False
+    
+    def send_goal(self, x, y):
+        goal = PoseStamped()
+        goal.header.frame_id = 'map'
+        goal.header.stamp = self.get_clock().now().to_msg()
+        goal.pose.position.x = x
+        goal.pose.position.y = y
 
-    def move_to(self, x, y):
-        twist = Twist()
+        # Set orientation (optional, here we use the current orientation)
+        q = quaternion_from_euler(0, 0, self.current_yaw)
+        goal.pose.orientation.x = q[0]
+        goal.pose.orientation.y = q[1]
+        goal.pose.orientation.z = q[2]
+        goal.pose.orientation.w = q[3]
 
-        # Calcular la diferencia
-        dx = x - self.current_x
-        dy = y - self.current_y
-
-        # Distancia al objetivo
-        distance = math.hypot(dx, dy)
-
-        # Ángulo hacia el objetivo
-        target_angle = math.atan2(dy, dx)
-
-        # Diferencia de ángulo
-        angle_diff = target_angle - self.current_yaw
-
-        # Normalizar el ángulo a [-pi, pi]
-        angle_diff = (angle_diff + math.pi) % (2 * math.pi) - math.pi
-
-        # Constantes de control proporcional
-        kp_linear = 0.5
-        kp_angular = 1.0
-
-        twist.linear.x = kp_linear * distance
-        twist.angular.z = kp_angular * angle_diff
-
-        # Limitar las velocidades
-        max_linear_speed = 0.03
-        max_angular_speed = 1.0
-        twist.linear.x = max(min(twist.linear.x, max_linear_speed), -max_linear_speed)
-        twist.angular.z = max(min(twist.angular.z, max_angular_speed), -max_angular_speed)
-
-        self.cmd_vel_publisher.publish(twist)
-        self.get_logger().info(
-            f'Moving to ({x:.2f}, {y:.2f}), current position ({self.current_x:.2f}, {self.current_y:.2f}), yaw {self.current_yaw:.2f}'
-        )
+        self.goal_publisher.publish(goal)
+        self.get_logger().info(f'Sent new goal to ({x:.2f}, {y:.2f})')
+        self.goal_active = True
 
     def count_hazmats_in_file(self):
         try:
@@ -157,49 +159,87 @@ class RandomExploration(Node):
         if self.hazmats_detected >= TOTAL_HAZMATS:
             self.get_logger().info('Exploration complete!')
             self.timer.cancel()
-            # Detener el robot
-            twist = Twist()
-            self.cmd_vel_publisher.publish(twist)
             return
 
-        if self.goal_x is not None and self.goal_y is not None:
-            # Verificar si hemos llegado al objetivo actual
+        if self.goal_active:
+            # Check if we have reached the current goal
             dx = self.goal_x - self.current_x
             dy = self.goal_y - self.current_y
             distance = math.hypot(dx, dy)
-            if distance < 0.1:  # Umbral para considerar que se alcanzó el objetivo
+            if distance < 0.2:  # Threshold to consider the goal reached
                 self.get_logger().info('Reached target point!')
                 self.goal_x = None
                 self.goal_y = None
-                # Detener el robot
-                twist = Twist()
-                self.cmd_vel_publisher.publish(twist)
-            else:
-                # Continuar moviéndose hacia el objetivo
-                self.move_to(self.goal_x, self.goal_y)
+                self.goal_active = False
+                # Perform raycasting
+                self.perform_raycasting()
         else:
-            # Generar un nuevo objetivo
+            # Generate a new goal
             attempts = 0
             max_attempts = 100
             while attempts < max_attempts:
                 x = random.uniform(self.map_min_x, self.map_max_x)
                 y = random.uniform(self.map_min_y, self.map_max_y)
 
-                # Verificar si la posición generada está libre y no está dentro del radio de exploración
-                if self.is_free(x, y) and not self.is_within_radius(x, y):
+                # Check if the generated position is free, not within exploration radius, and not covered
+                if self.is_free(x, y) and not self.is_within_radius(x, y) and not self.is_covered(x, y):
                     self.visited.append((x, y))
                     self.goal_x = x
                     self.goal_y = y
-                    self.get_logger().info(f'New target set to ({x:.2f}, {y:.2f})')
+                    self.send_goal(self.goal_x, self.goal_y)
                     break
                 attempts += 1
             if attempts == max_attempts:
                 self.get_logger().warn('Failed to find a valid target point.')
 
+    def perform_raycasting(self):
+        if not self.occupancy_grid:
+            self.get_logger().warn('Occupancy grid not available for raycasting.')
+            return
+
+        num_rays = 360  # Número de rayos
+        angle_increment = 2 * math.pi / num_rays
+        for i in range(num_rays):
+            angle = i * angle_increment
+            self.cast_ray(angle, RAYCAST_RADIUS)
+
+    def cast_ray(self, angle, max_distance):
+        x = self.current_x
+        y = self.current_y
+        step_size = self.occupancy_grid.info.resolution / 2.0
+        distance = 0.0
+
+        while distance < max_distance:
+            x += step_size * math.cos(angle)
+            y += step_size * math.sin(angle)
+            distance += step_size
+
+            map_x, map_y = self.world_to_map(x, y)
+            # Comprobar límites
+            if not (0 <= map_x < self.occupancy_grid.info.width and 0 <= map_y < self.occupancy_grid.info.height):
+                break
+
+            index = map_y * self.occupancy_grid.info.width + map_x
+            # Comprobar si la celda está ocupada
+            if self.occupancy_grid.data[index] != 0:
+                # Se encontró un obstáculo
+                break
+
+            # Marcar la celda como cubierta
+            self.covered_data[map_y][map_x] = 1
+            # Marcar vecinos para redundancia
+            self.mark_neighbors(map_x, map_y)
+
+    def mark_neighbors(self, map_x, map_y):
+        for dx in [-1, 0, 1]:
+            for dy in [-1, 0, 1]:
+                nx = map_x + dx
+                ny = map_y + dy
+                if 0 <= nx < self.occupancy_grid.info.width and 0 <= ny < self.occupancy_grid.info.height:
+                    self.covered_data[ny][nx] = 1
+
     def destroy_node(self):
-        # Detener el robot al cerrar el nodo
-        twist = Twist()
-        self.cmd_vel_publisher.publish(twist)
+        # Cerrar el nodo
         super().destroy_node()
 
 

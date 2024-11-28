@@ -211,7 +211,7 @@ controller_server:
       vx_samples: 20
       vy_samples: 5
       vtheta_samples: 20
-      sim_time: 2.0
+      sim_time: 3.0
       linear_granularity: 0.05
       angular_granularity: 0.025
       transform_tolerance: 0.2
@@ -228,7 +228,7 @@ controller_server:
       GoalAlign.forward_point_distance: 0.1
       PathDist.scale: 32.0
       GoalDist.scale: 24.0
-      RotateToGoal.scale: 32.0
+      RotateToGoal.scale: 16.0
       RotateToGoal.slowing_factor: 5.0
       RotateToGoal.lookahead_time: -1.0
 
@@ -261,8 +261,8 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         enabled: True
-        inflation_radius: 0.3
-        cost_scaling_factor: 2.58
+        inflation_radius: 0.15  # Adjusted for narrow hallways
+        cost_scaling_factor: 1.0  # Lowered for a gentler gradient
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
@@ -316,8 +316,8 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         enabled: True
-        inflation_radius: 0.3
-        cost_scaling_factor: 2.58
+        inflation_radius: 0.15  # Adjusted for narrow hallways
+        cost_scaling_factor: 1.0  # Lowered for a gentler gradien
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True

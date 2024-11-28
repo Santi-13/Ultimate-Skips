@@ -10,8 +10,8 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/launch', ['launch/exploration.launch.py', 'launch/left_wall_exploration.launch.py', 'launch/random_exploration.launch.py']),
-        ('share/' + package_name + '/config', ['config/navigation.yaml', 'config/slam_mapping.yaml', 'config/slam_localization.yaml', 'config/nav2_params.yaml']),
+        ('share/' + package_name + '/launch', ['launch/exploration.launch.py', 'launch/left_wall_exploration.launch.py', 'launch/random_exploration.launch.py', 'launch/navigator.launch.py']),
+        ('share/' + package_name + '/config', ['config/navigation.yaml', 'config/slam_mapping.yaml', 'config/slam_localization.yaml']),
         ('share/' + package_name + '/rviz', ['rviz/explore.rviz']),  
 
     ],
@@ -26,11 +26,9 @@ setup(
         'console_scripts': [
             'left_wall_follower = explorer_skips.left_wall_follower:main',
             'frontier_analyzer = explorer_skips.frontier_analyzer:main',
-            'wavefront_planner = explorer_skips.wavefront_planner:main',
             'landmark_marker = explorer_skips.landmark_marker:main', 
             'random_exploration = explorer_skips.random_exploration:main',
             'explore = explorer_skips.explore:main',
-            'laser_scan_filter_node = explorer_skips.laser_scan_filter_node:main',
         ],
     },
 )

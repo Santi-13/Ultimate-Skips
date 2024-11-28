@@ -29,13 +29,6 @@ class WavefrontPlanner(Node):
             10
         )
 
-   
-        self.goal_pub = self.create_publisher(
-            PointStamped,
-            '/unknown_frontier_goal',
-            10
-        )
-
         self.goal_pub = self.create_publisher(
             PoseStamped,
             '/goal_pose',

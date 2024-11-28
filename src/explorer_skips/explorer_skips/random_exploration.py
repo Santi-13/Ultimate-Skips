@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import rclpy
 from rclpy.node import Node
 import random
@@ -10,7 +8,7 @@ from geometry_msgs.msg import Twist
 TOTAL_HAZMATS = 4  # Número total de hazmats a detectar
 RADIUS = 1.0  # Radio de distancia mínima entre puntos visitados
 HAZMAT_FILE = 'hazmatDetected.txt'  # Archivo donde se almacenan los hazmats detectados
-
+RAYCAST_RADIUS = 1.0  # Radius for raycasting
 
 class RandomExploration(Node):
     def __init__(self):
@@ -18,8 +16,9 @@ class RandomExploration(Node):
         self.hazmats_detected = 0
         self.visited = []
         self.occupancy_grid = None
+        self.covered_data = None  # Initialize covered_data
 
-        #Suscribirse al mapa de ocupación
+        # Suscribirse al mapa de ocupación
         self.map_subscriber = self.create_subscription(
             OccupancyGrid, '/map', self.map_callback, 10)
 
@@ -47,11 +46,17 @@ class RandomExploration(Node):
         self.occupancy_grid = msg
         self.get_logger().info('Occupancy grid received!')
 
+        # Inicializar covered_data como una matriz 2D de ceros
+        width = self.occupancy_grid.info.width
+        height = self.occupancy_grid.info.height
+        self.covered_data = [[0 for _ in range(width)] for _ in range(height)]
+
         # Obtener límites del mapa
         self.map_min_x = self.occupancy_grid.info.origin.position.x
         self.map_min_y = self.occupancy_grid.info.origin.position.y
         self.map_max_x = self.map_min_x + self.occupancy_grid.info.width * self.occupancy_grid.info.resolution
         self.map_max_y = self.map_min_y + self.occupancy_grid.info.height * self.occupancy_grid.info.resolution
+
 
     def odom_callback(self, msg):
         # Actualizar la posición y orientación actuales

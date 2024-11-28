@@ -228,9 +228,10 @@ class RandomExploration(Node):
         if self.goal_active and self.goal_x is not None and self.goal_y is not None:
             dx = self.goal_x - self.current_x
             dy = self.goal_y - self.current_y
+            distance = math.hypot(dx, dy)
             self.get_logger().debug(f'Distance to the goal: {distance:.2f} meters')
 
-            distance = math.hypot(dx, dy)
+            
             if distance < 0.1:  # Threshold to consider the goal reached
                 self.get_logger().info('Reached target point!')
                 self.goal_active = False

@@ -54,6 +54,7 @@ class WavefrontPlanner(Node):
         )
 
         self.cmd_pub = self.create_publisher(Twist, 'cmd_vel', 10)
+        self.callback_group = ReentrantCallbackGroup()
 
         # No of unknown cells for a cluster to be considered a frontier
         self.min_unknown_cells = 5

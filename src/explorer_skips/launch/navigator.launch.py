@@ -12,61 +12,42 @@ def generate_launch_description():
 
     # Define paths
     nav2_params = os.path.join(explorer_skips_dir, 'config', 'navigation.yaml')
-    slam_params = os.path.join(explorer_skips_dir, 'config', 'slam_localization.yaml')
     map_file = os.path.join(explorer_skips_dir, 'maps', 'map.yaml')
     rviz_config = os.path.join(explorer_skips_dir, 'rviz', 'explore.rviz')
 
     return LaunchDescription([
-        # Publicador de transformaciones estáticas
+        # Static transform from 'odom' to 'base_link'
         Node(
             package='tf2_ros',
-            namespace='scan_to_map',
             executable='static_transform_publisher',
-            arguments=["0", "0", "0", "0", "0", "0", "map", "scan"]
+            name='static_transform_odom_to_base',
+            arguments=["0", "0", "0", "0", "0", "0", "odom", "base_link"]
         ),
-        # Nodo de RViz
+
+        # RViz node
         Node(
             package='rviz2',
             executable='rviz2',
             name='rviz2',
-            arguments=['-d' + os.path.join(explorer_skips_dir, 'rviz', 'explore.rviz')]        
-            ),
-        # Nodo de laser filters
-         Node(
-            package='explorer_skips',
-            executable='laser_scan_filter_node',
-            name='laser_scan_filter_node',
+            arguments=['-d', rviz_config],
             output='screen'
         ),
-        # Nodo de SLAM Toolbox
-        Node(
-            package='slam_toolbox',
-            executable='async_slam_toolbox_node',
-            name='slam_toolbox',
-            parameters=[slam_params],
-            output='log'
-        ),
-        # Lanzar Navigation2 con inicialización del mapa
+
+        # Navigation2 Bringup
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(nav2_bringup_dir, 'launch', 'navigation_launch.py')),
+            PythonLaunchDescriptionSource(os.path.join(nav2_bringup_dir, 'launch', 'bringup_launch.py')),
             launch_arguments={
                 'params_file': nav2_params,
-                'map': map_file,  # Agrega el mapa
+                'map': map_file,
                 'use_sim_time': 'false'
-            }.items() 
+            }.items()
         ),
-        # Nodo para marcadores
+
+        # Landmark Marker Node
         Node(
            package='explorer_skips',
            executable='landmark_marker',
            name='landmark_marker',
            output='screen'
-        ),
-        # Tu nodo de exploración
-        # Node(
-        #    package='explorer_skips',
-        #    executable='wavefront_planner',
-        #    name='wavefront_planner',
-        #    output='screen'
-        # )
+        )
     ])

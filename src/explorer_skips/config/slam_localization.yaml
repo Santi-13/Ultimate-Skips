@@ -14,6 +14,8 @@ slam_toolbox:
     base_frame: base_footprint  # Changed from base_link to base_footprint for TurtleBot3
     scan_topic: /scan            # Removed leading slash for best practices
     mode: localization  # or 'mapping' if needed
+    map_start_pose: [7.5, 7.5, 0.0]
+
 
     debug_logging: true
 

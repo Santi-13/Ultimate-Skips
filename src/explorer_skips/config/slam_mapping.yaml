@@ -32,7 +32,7 @@ slam_toolbox:
     # General Parameters
     use_scan_matching: true
     use_scan_barycenter: true
-    minimum_travel_distance: 0.2  # Adjusted for TurtleBot3's mobility
+    minimum_travel_distance: 0.1  # Adjusted for TurtleBot3's mobility
     minimum_travel_heading: 0.17  # Approximately 10 degrees in radians
     scan_buffer_size: 10
     scan_buffer_maximum_scan_distance: 2.0  # Adjusted for indoor environments

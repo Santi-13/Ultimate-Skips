@@ -3,7 +3,7 @@ from rclpy.node import Node
 import random
 import math
 from nav_msgs.msg import OccupancyGrid, Odometry
-from geometry_msgs.msg import PoseStamped, PointStamped, Point, PoseWithCovarianceStamped
+from geometry_msgs.msg import PoseStamped, PointStamped, Point, PoseWithCovarianceStamped, Twist    
 from std_msgs.msg import Header
 from tf_transformations import quaternion_from_euler
 
@@ -42,6 +42,9 @@ class RandomExploration(Node):
         # Publisher to covered_data OccupancyGrid
         self.covered_map_publisher = self.create_publisher(OccupancyGrid, '/covered_map', 10)
 
+        # Publisher for cmd_vel
+        self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)  
+
         # Timer para ejecutar el loop principal
         self.timer = self.create_timer(0.5, self.explore)
 
@@ -71,6 +74,44 @@ class RandomExploration(Node):
         self.offset_y = 0.0
         self.offset_yaw = 0.0
         self.pose_aligned = False  # Flag to ensure alignment happens only once
+
+        # Spinning parameters
+        self.spinning = False  # Flag to indicate if the robot is spinning
+        self.spin_start_time = None  # Time when spinning started
+        self.spin_duration = 12.56  # Duration to complete a 360-degree spin at 0.2 rad/s
+        self.spin_angular_velocity = 0.5  # radians per second
+
+    def initiate_spin(self):
+        self.spinning = True
+        self.spin_start_time = self.get_clock().now()
+        # Start a timer to handle spinning
+        self.spin_timer = self.create_timer(0.1, self.spin_callback)  # Spin at 10 Hz
+        self.get_logger().info('Initiating 360-degree spin.')
+
+    def spin_callback(self):
+        now = self.get_clock().now()
+        elapsed = (now - self.spin_start_time).nanoseconds / 1e9  # Convert nanoseconds to seconds
+
+        if elapsed >= self.spin_duration:
+            # Stop spinning
+            twist = Twist()
+            twist.angular.z = 0.0
+            self.cmd_vel_publisher.publish(twist)
+            self.get_logger().info('Completed 360-degree spin.')
+
+            # Cancel the spin timer
+            self.spin_timer.cancel()
+            self.spin_timer = None
+            self.spinning = False
+
+            # Proceed to send the next goal
+            self.send_next_goal()
+        else:
+            # Continue spinning
+            twist = Twist()
+            twist.angular.z = self.spin_angular_velocity  # radians per second
+            self.cmd_vel_publisher.publish(twist)
+
 
     def normalize_angle(self, angle):
         """
@@ -185,15 +226,20 @@ class RandomExploration(Node):
 
         # Check if a goal is active and if the robot has reached it
         if self.goal_active and self.goal_x is not None and self.goal_y is not None:
-            self.get_logger().info('MIra mama')
             dx = self.goal_x - self.current_x
             dy = self.goal_y - self.current_y
+            self.get_logger().debug(f'Distance to the goal: {distance:.2f} meters')
+
             distance = math.hypot(dx, dy)
             if distance < 0.1:  # Threshold to consider the goal reached
                 self.get_logger().info('Reached target point!')
                 self.goal_active = False
                 self.current_goal_index += 1  # Move to the next goal
                 # Optionally, perform additional actions here (e.g., updating covered_data)
+
+                # Initiate spinning if not already spinning
+                if not self.spinning:
+                    self.initiate_spin()
 
     def amcl_pose_callback(self, msg):
         # Update current position and orientation from AMCL pose
@@ -329,7 +375,7 @@ class RandomExploration(Node):
 
         # Check if there are remaining goals
         if self.current_goal_index < len(self.goal_points):
-            if not self.goal_active:
+            if not self.goal_active and not self.spinning:
                 # Send the next goal
                 x, y = self.goal_points[self.current_goal_index]
                 self.send_goal(x, y)

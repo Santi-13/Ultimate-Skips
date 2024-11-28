@@ -32,12 +32,12 @@ def generate_launch_description():
             arguments=['-d' + os.path.join(explorer_skips_dir, 'rviz', 'explore.rviz')]        
             ),
         # Nodo de laser filters
-         Node(
-            package='explorer_skips',
-            executable='laser_scan_filter_node',
-            name='laser_scan_filter_node',
-            output='screen'
-        ),
+        #  Node(
+        #     package='explorer_skips',
+        #     executable='laser_scan_filter_node',
+        #     name='laser_scan_filter_node',
+        #     output='screen'
+        # ),
         # Nodo de SLAM Toolbox
         Node(
             package='slam_toolbox',

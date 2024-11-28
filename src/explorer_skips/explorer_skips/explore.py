@@ -65,8 +65,6 @@ class WavefrontPlanner(Node):
         self.minimum_frontier_distance = 0.5  # Adjust this value as needed
         self.save_map_requested = False
 
-        self.timer = self.create_timer(0.1, self.timer_callback)
-
     def pose_callback(self, msg):
         # self.get_logger().info('Pose Callback')
         self.current_position = msg.pose.pose.position
@@ -75,19 +73,19 @@ class WavefrontPlanner(Node):
         self.get_logger().info(f"Received OccupancyGrid with shape: {msg.info.width}x{msg.info.height}")
         
         frontiers = self.find_frontiers(msg)
-
-        
         
         if frontiers:
             frontiers = [
                 frontier for frontier in frontiers
                 if self.distance_to_robot(frontier.point) > self.minimum_frontier_distance
             ]
-            closest = min(frontiers, key=lambda frontier: self.distance_to_robot(frontier.point))
-            
-            if not self.last_sent_goal or self.distance_between_goals(closest, self.last_sent_goal) > 0.1:
-                self.send_goal(closest)
-                self.last_sent_goal = closest
+
+            if frontiers:
+                closest = min(frontiers, key=lambda frontier: self.distance_to_robot(frontier.point))
+                
+                if not self.last_sent_goal or self.distance_between_goals(closest, self.last_sent_goal) > 0.1:
+                    self.send_goal(closest)
+                    self.last_sent_goal = closest
 
         else:
             self.no_frontier_queue.append(1)
@@ -168,7 +166,7 @@ class WavefrontPlanner(Node):
         data = np.array(occupancy_grid.data).reshape((occupancy_grid.info.height, occupancy_grid.info.width))
 
         # Number of radius around the robot
-        n = 8
+        n = 12
 
         if self.current_position is not None:
             # Current Robot Position

@@ -245,41 +245,42 @@ controller_server:
 
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
-      required_movement_radius: 0.05  # Adjusted to match navigation.yaml
+      required_movement_radius: 0.05
       movement_time_allowance: 15.0
 
     goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.1  # Matches navigation.yaml for precise goals
+      xy_goal_tolerance: 0.1
       yaw_goal_tolerance: 0.5
       stateful: True
 
     FollowPath:
       plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
-      desired_linear_vel: 0.04  # Adjusted for TurtleBot3's capability
-      lookahead_dist: 0.4      # Smaller value for tighter maneuvers
-      min_lookahead_dist: 0.2  # Matches robot size and speed
-      max_lookahead_dist: 0.6  # Avoids over-aggressive lookahead
-      lookahead_time: 1.5
-      rotate_to_heading_angular_vel: 0.8  # Moderate turn speed
+      desired_linear_vel: 0.05
+      lookahead_dist: 0.1
+      min_lookahead_dist: 0.1
+      max_lookahead_dist: 0.3
+      lookahead_time: 1.0
+      rotate_to_heading_angular_vel: 2.0
       transform_tolerance: 0.1
-      use_velocity_scaled_lookahead_dist: false
-      min_approach_linear_velocity: 0.02  # Slow down near goal
+      use_velocity_scaled_lookahead_dist: true
+      min_approach_linear_velocity: 0.1
       approach_velocity_scaling_dist: 0.4
       use_collision_detection: true
-      max_allowed_time_to_collision_up_to_carrot: 1.0
+      max_allowed_time_to_collision_up_to_carrot: 0.5
       use_regulated_linear_velocity_scaling: true
       use_fixed_curvature_lookahead: false
-      curvature_lookahead_dist: 0.25
+      curvature_lookahead_dist: 0.3
       use_cost_regulated_linear_velocity_scaling: true
-      regulated_linear_scaling_min_radius: 0.5  # For smooth handling in curves
-      regulated_linear_scaling_min_speed: 0.1   # Ensures forward motion
+      regulated_linear_scaling_min_radius: 0.5
+      regulated_linear_scaling_min_speed: 0.15
       use_rotate_to_heading: true
       allow_reversing: false
-      rotate_to_heading_min_angle: 0.3  # Approximately 45 degrees
-      max_angular_accel: 0.5              # Balanced turning rate
+      rotate_to_heading_min_angle: 0.2
+      max_angular_accel: 2.0
       max_robot_pose_search_dist: 10.0
       interpolate_curvature_after_goal: true
+
 
 controller_server_rclcpp_node:
   ros__parameters:

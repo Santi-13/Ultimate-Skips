@@ -2,15 +2,19 @@ import rclpy
 from rclpy.node import Node
 import random
 import math
+import numpy as np
+import cv2 
+
 from nav_msgs.msg import OccupancyGrid, Odometry
-from geometry_msgs.msg import PoseStamped, PointStamped, Point, PoseWithCovarianceStamped, Twist    
+from geometry_msgs.msg import PoseStamped, PointStamped, Point, PoseWithCovarianceStamped
 from std_msgs.msg import Header
 from tf_transformations import quaternion_from_euler
 
 TOTAL_HAZMATS = 4  # Número total de hazmats a detectar
-RADIUS = 0.6  # Radio de distancia mínima entre puntos visitados
+RADIUS = 0.3  # Radio de distancia mínima entre puntos visitados
 HAZMAT_FILE = 'hazmatDetected.txt'  # Archivo donde se almacenan los hazmats detectados
-RAYCAST_RADIUS = 0.6  # Radius for raycasting
+RAYCAST_RADIUS = 0.3  # Radius for raycasting
+WALL_DISTANCE_THRESHOLD = RADIUS / 2.0  # Distancia mínima de los puntos a las paredes
 
 class RandomExploration(Node):
     def __init__(self):
@@ -19,6 +23,7 @@ class RandomExploration(Node):
         self.visited = []
         self.occupancy_grid = None
         self.covered_data = None  # Initialize covered_data
+        self.distance_map = None  # Initialize distance_map
 
         # Flags to check if map and pose are received
         self.map_received = False
@@ -42,11 +47,8 @@ class RandomExploration(Node):
         # Publisher to covered_data OccupancyGrid
         self.covered_map_publisher = self.create_publisher(OccupancyGrid, '/covered_map', 10)
 
-        # Publisher for cmd_vel
-        self.cmd_vel_publisher = self.create_publisher(Twist, '/cmd_vel', 10)  
-
         # Timer para ejecutar el loop principal
-        self.timer = self.create_timer(0.5, self.explore)
+        self.explore_timer = self.create_timer(0.5, self.explore)
 
         self.landmark_pub = self.create_publisher(
             PointStamped,
@@ -69,56 +71,20 @@ class RandomExploration(Node):
         self.goal_points = []  # List to store generated exploration points
         self.current_goal_index = 0  # Index to track the current goal
 
+        # Timer para gestionar el retraso entre objetivos
+        self.goal_timer = None
+
         # Offset variables to align odom with map via AMCL
         self.offset_x = 0.0
         self.offset_y = 0.0
         self.offset_yaw = 0.0
         self.pose_aligned = False  # Flag to ensure alignment happens only once
 
-        # Spinning parameters
-        self.spinning = False  # Flag to indicate if the robot is spinning
-        self.spin_start_time = None  # Time when spinning started
-        self.spin_duration = 12.56  # Duration to complete a 360-degree spin at 0.2 rad/s
-        self.spin_angular_velocity = 0.5  # radians per second
-
-    def initiate_spin(self):
-        self.spinning = True
-        self.spin_start_time = self.get_clock().now()
-        # Start a timer to handle spinning
-        self.spin_timer = self.create_timer(0.1, self.spin_callback)  # Spin at 10 Hz
-        self.get_logger().info('Initiating 360-degree spin.')
-
-    def spin_callback(self):
-        now = self.get_clock().now()
-        elapsed = (now - self.spin_start_time).nanoseconds / 1e9  # Convert nanoseconds to seconds
-
-        if elapsed >= self.spin_duration:
-            # Stop spinning
-            twist = Twist()
-            twist.angular.z = 0.0
-            self.cmd_vel_publisher.publish(twist)
-            self.get_logger().info('Completed 360-degree spin.')
-
-            # Cancel the spin timer
-            self.spin_timer.cancel()
-            self.spin_timer = None
-            self.spinning = False
-
-            # Proceed to send the next goal
-            self.send_next_goal()
-        else:
-            # Continue spinning
-            twist = Twist()
-            twist.angular.z = self.spin_angular_velocity  # radians per second
-            self.cmd_vel_publisher.publish(twist)
-
-
     def normalize_angle(self, angle):
         """
         Normalize an angle to the range [-pi, pi].
         """
         return math.atan2(math.sin(angle), math.cos(angle))
-
 
     def map_callback(self, msg):
         # Actualizar el mapa de ocupación
@@ -127,10 +93,15 @@ class RandomExploration(Node):
         self.map_received = True
         
         # Publish coordinates of the dock
-        self.landmark_pub.publish(PointStamped(
-                                    header=Header(stamp=self.get_clock().now().to_msg(), frame_id='map'),                            
-                                    point=Point(x=float(9.5), y=float(5.0), z=0.0)
-                                ))
+        dock_point = PointStamped(
+            header=Header(
+                stamp=self.get_clock().now().to_msg(),
+                frame_id='map'
+            ),
+            point=Point(x=9.5, y=5.0, z=0.0)
+        )
+        self.landmark_pub.publish(dock_point)
+        self.get_logger().info('Published dock landmark.')
 
         # Inicializar covered_data como una matriz 2D de ceros
         width = self.occupancy_grid.info.width
@@ -143,8 +114,25 @@ class RandomExploration(Node):
         self.map_max_x = self.map_min_x + self.occupancy_grid.info.width * self.occupancy_grid.info.resolution
         self.map_max_y = self.map_min_y + self.occupancy_grid.info.height * self.occupancy_grid.info.resolution
 
+        # Compute the distance map to the nearest wall
+        self.compute_distance_map()
+
         # Pre-generate exploration points
         self.generate_exploration_points()
+
+    def compute_distance_map(self):
+        # Convert occupancy grid data to a 2D numpy array
+        occupancy_array = np.array(self.occupancy_grid.data).reshape((self.occupancy_grid.info.height, self.occupancy_grid.info.width))
+        
+        # Create a binary image where occupied cells are 0 and free cells are 1
+        # Assuming that any cell with value > 50 is considered occupied
+        binary_image = np.where(occupancy_array > 50, 0, 1).astype(np.uint8)
+
+        # Compute distance transform        
+        self.distance_map = cv2.distanceTransform(binary_image, cv2.DIST_L2, 5)
+        self.distance_map *= self.occupancy_grid.info.resolution  # Convert to meters
+        self.get_logger().info('Distance map computed using OpenCV.')
+        
 
     def generate_exploration_points(self):
         self.get_logger().info('Generating exploration points...')
@@ -157,7 +145,7 @@ class RandomExploration(Node):
             y = random.uniform(self.map_min_y, self.map_max_y)
 
             # Check if the position is free, not within exploration radius, and not covered
-            if self.is_free(x, y) and not self.is_within_radius(x, y) and not self.is_covered(x, y):
+            if self.is_valid_point(x, y):
                 # Add to visited to enforce minimum distance for future points
                 self.visited.append((x, y))
                 self.goal_points.append((x, y))
@@ -185,6 +173,44 @@ class RandomExploration(Node):
         # After generating all points, publish the covered occupancy grid
         self.publish_covered_map()
 
+    def is_valid_point(self, x, y):
+        # Check if the point is free
+        if not self.is_free(x, y):
+            return False
+
+        # Check if the point is at least RADIUS away from other points
+        if self.is_within_radius(x, y):
+            return False
+
+        # Check if the point is at least WALL_DISTANCE_THRESHOLD away from walls
+        if not self.is_far_from_walls(x, y):
+            return False
+
+        # Check if the point is not already covered
+        if self.is_covered(x, y):
+            return False
+
+        return True
+    
+    def is_far_from_walls(self, x, y):
+        if self.distance_map is None:
+            self.get_logger().warn('Distance map not available.')
+            return False
+
+        # Convert world coordinates to map indices
+        map_x, map_y = self.world_to_map(x, y)
+
+        if not (0 <= map_x < self.occupancy_grid.info.width and 0 <= map_y < self.occupancy_grid.info.height):
+            return False
+
+        # Get the distance at this cell
+        distance = self.distance_map[map_y, map_x]
+
+        if distance >= WALL_DISTANCE_THRESHOLD:
+            return True
+        else:
+            return False
+    
     def perform_raycasting_at_point(self, x, y):
         num_rays = 360  # Number of rays
         angle_increment = 2 * math.pi / num_rays
@@ -194,11 +220,11 @@ class RandomExploration(Node):
             self.cast_ray(x, y, angle, RAYCAST_RADIUS)
 
     def odom_callback(self, msg):
-        # Actualizar la posición y orientación actuales
+        # Update current position and orientation from odometry
         self.current_x = msg.pose.pose.position.x
         self.current_y = msg.pose.pose.position.y
 
-        # Extraer yaw del cuaternión
+        # Extract yaw from quaternion
         orientation_q = msg.pose.pose.orientation
         siny_cosp = 2 * (orientation_q.w * orientation_q.z + orientation_q.x * orientation_q.y)
         cosy_cosp = 1 - 2 * (orientation_q.y * orientation_q.y + orientation_q.z * orientation_q.z)
@@ -224,23 +250,42 @@ class RandomExploration(Node):
         self.get_logger().debug(f'Adjusted Position: ({adjusted_x:.2f}, {adjusted_y:.2f}), '
                                 f'Adjusted Yaw: {adjusted_yaw:.2f}')
 
-        # Check if a goal is active and if the robot has reached it
+        # Check if there is an active goal and if the robot has reached it
         if self.goal_active and self.goal_x is not None and self.goal_y is not None:
-            dx = self.goal_x - self.current_x
-            dy = self.goal_y - self.current_y
+            dx = self.goal_x - adjusted_x
+            dy = self.goal_y - adjusted_y
             distance = math.hypot(dx, dy)
             self.get_logger().debug(f'Distance to the goal: {distance:.2f} meters')
 
-            
-            if distance < 0.1:  # Threshold to consider the goal reached
+            if distance < 0.2:  # Threshold to consider goal reached
                 self.get_logger().info('Reached target point!')
                 self.goal_active = False
-                self.current_goal_index += 1  # Move to the next goal
-                # Optionally, perform additional actions here (e.g., updating covered_data)
 
-                # Initiate spinning if not already spinning
-                if not self.spinning:
-                    self.initiate_spin()
+                # Perform raycasting at the reached point
+                self.perform_raycasting_at_point(adjusted_x, adjusted_y)
+
+                # Increment goal index to move to the next goal
+                self.current_goal_index += 1
+
+                # Introduce a delay before sending the next goal
+                delay = 2.0  # seconds
+                if self.goal_timer is None:
+                    self.goal_timer = self.create_timer(delay, self.send_next_goal)
+                    self.get_logger().info(f'Setting timer to send next goal after {delay} seconds.')
+
+
+    def send_next_goal(self):
+        if self.current_goal_index < len(self.goal_points):
+            x, y = self.goal_points[self.current_goal_index]
+            self.send_goal(x, y)
+            self.get_logger().info(f'Sent goal {self.current_goal_index + 1}/{len(self.goal_points)}: ({x:.2f}, {y:.2f})')
+        else:
+            self.get_logger().info('All exploration points have been navigated.')
+            self.timer.cancel()
+        # Destruir el temporizador después de que se haya llamado
+        if self.goal_timer:
+            self.goal_timer.cancel()
+            self.goal_timer = None
 
     def amcl_pose_callback(self, msg):
         # Update current position and orientation from AMCL pose
@@ -262,7 +307,7 @@ class RandomExploration(Node):
                 self.pose_initialized = True
                 self.get_logger().info('Robot pose initialized via AMCL.')
 
-                # Compute offsets between AMCL pose and current odom pose
+                 # Compute offsets between AMCL pose and current odom pose
                 self.offset_x = msg.pose.pose.position.x - self.current_x
                 self.offset_y = msg.pose.pose.position.y - self.current_y
                 angle_diff = self.normalize_angle(amcl_yaw - self.current_yaw)
@@ -271,6 +316,7 @@ class RandomExploration(Node):
                 self.pose_aligned = True  # Set flag to indicate alignment is done
                 self.get_logger().info(f'Pose aligned with offset_x: {self.offset_x:.2f}, '
                                        f'offset_y: {self.offset_y:.2f}, offset_yaw: {self.offset_yaw:.2f}')
+
 
     def is_free(self, x, y):
         if not self.occupancy_grid:
@@ -321,22 +367,22 @@ class RandomExploration(Node):
         goal.pose.position.x = x
         goal.pose.position.y = y
 
-        # Set orientation (optional, here we use the current orientation)
+        # Establecer orientación (opcional, aquí usamos la orientación actual)
         q = quaternion_from_euler(0, 0, self.current_yaw)
         goal.pose.orientation.x = q[0]
         goal.pose.orientation.y = q[1]
         goal.pose.orientation.z = q[2]
         goal.pose.orientation.w = q[3]
 
-        self.goal_publisher.publish(goal)
-        self.get_logger().info(f'Sent new goal to ({x:.2f}, {y:.2f})')
-        self.goal_active = True
-
         # Set the current goal coordinates for odom_callback to use
         self.goal_x = x
         self.goal_y = y
 
-        # Publish the generated point as a landmark
+        self.goal_publisher.publish(goal)
+        self.get_logger().info(f'Sent new goal to ({x:.2f}, {y:.2f})')
+        self.goal_active = True
+
+        # Publicar el punto generado como un landmark
         landmark_point = PointStamped(
             header=Header(
                 stamp=self.get_clock().now().to_msg(),
@@ -346,6 +392,7 @@ class RandomExploration(Node):
         )
         self.landmark_pub.publish(landmark_point)
         self.get_logger().info(f'Published landmark at ({x:.2f}, {y:.2f})')
+
 
     def count_hazmats_in_file(self):
         try:
@@ -357,7 +404,7 @@ class RandomExploration(Node):
             return 0
 
     def explore(self):
-        # Ensure both map and pose are received and initialized
+        # Ensure both map and pose have been received and initialized
         if not self.map_received:
             self.get_logger().warn('Waiting for the occupancy grid map...')
             return
@@ -371,30 +418,13 @@ class RandomExploration(Node):
 
         if self.hazmats_detected >= TOTAL_HAZMATS:
             self.get_logger().info('Exploration complete!')
-            self.timer.cancel()
+            self.explore_timer.cancel()
             return
 
-        # Check if there are remaining goals
-        if self.current_goal_index < len(self.goal_points):
-            if not self.goal_active and not self.spinning:
-                # Send the next goal
-                x, y = self.goal_points[self.current_goal_index]
-                self.send_goal(x, y)
-        else:
-            self.get_logger().info('All exploration points have been navigated.')
-            self.timer.cancel()
+        # If no goal is active and there are goals left, send the next goal
+        if not self.goal_active and self.current_goal_index < len(self.goal_points):
+            self.send_next_goal()
 
-
-    def perform_raycasting(self):
-        if not self.occupancy_grid:
-            self.get_logger().warn('Occupancy grid not available for raycasting.')
-            return
-
-        num_rays = 360  # Número de rayos
-        angle_increment = 2 * math.pi / num_rays
-        for i in range(num_rays):
-            angle = i * angle_increment
-            self.cast_ray(angle, RAYCAST_RADIUS)
 
     def cast_ray(self, start_x, start_y, angle, max_distance):
         x = start_x
@@ -430,6 +460,7 @@ class RandomExploration(Node):
                 ny = map_y + dy
                 if 0 <= nx < self.occupancy_grid.info.width and 0 <= ny < self.occupancy_grid.info.height:
                     self.covered_data[ny][nx] = 1
+
 
     def publish_covered_map(self):
         if not self.covered_data or not self.occupancy_grid:

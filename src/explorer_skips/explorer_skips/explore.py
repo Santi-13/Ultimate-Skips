@@ -8,8 +8,8 @@ import math
 from slam_toolbox.srv import SaveMap
 import os
 from std_msgs.msg import String 
-from geometry_msgs.msg import Twist
 from rclpy.callback_groups import ReentrantCallbackGroup
+from collections import deque
 
 
 class WavefrontPlanner(Node):
@@ -47,15 +47,14 @@ class WavefrontPlanner(Node):
             '/landmarks',
             10
         )
+        self.callback_group = ReentrantCallbackGroup()
+        self.no_frontier_queue = deque(maxlen=20)
 
         self.save_map_cli = self.create_client(
             SaveMap,
             'slam_toolbox/save_map',
             callback_group=self.callback_group
         )
-
-        self.cmd_pub = self.create_publisher(Twist, 'cmd_vel', 10)
-        self.callback_group = ReentrantCallbackGroup()
 
         # No of unknown cells for a cluster to be considered a frontier
         self.min_unknown_cells = 5
@@ -64,7 +63,6 @@ class WavefrontPlanner(Node):
         self.current_position = None
         self.last_sent_goal = None
         self.minimum_frontier_distance = 0.5  # Adjust this value as needed
-        self.stop = False
         self.save_map_requested = False
 
         self.timer = self.create_timer(0.1, self.timer_callback)
@@ -92,17 +90,15 @@ class WavefrontPlanner(Node):
                 self.last_sent_goal = closest
 
         else:
-            self.get_logger().info("Exploration completed - no more frontiers found")
-            self.stop = True
-            self.save_map_requested = True  # Solicitar guardado de mapa
-
-            # Detener el robot
-            stop_twist = Twist()
-            stop_twist.linear.x = 0.0
-            stop_twist.angular.z = 0.0
-            self.cmd_pub.publish(stop_twist)
-
-            self.get_logger().info("Robot detenido y guardando mapa UwU.")
+            self.no_frontier_queue.append(1)
+            if len(self.no_frontier_queue) == self.no_frontier_queue.maxlen:
+                self.get_logger().info("Exploration completed - no more frontiers found consecutively.")
+                self.save_map_requested = True
+                if self.save_map_requested:
+                    self.save_map()
+                    self.save_map_requested = False  # Restablecer la solicitud
+                    self.no_frontier_queue.clear()
+                self.get_logger().info("Robot detenido y guardando mapa UwU.")
 
     def send_goal(self, point):
     
@@ -136,7 +132,6 @@ class WavefrontPlanner(Node):
             return
         
         explorer_skips_dir = get_package_share_directory('explorer_skips')
-        # Crear el directorio maps en el home si no existe
         maps_dir = os.path.join(explorer_skips_dir, 'maps')
         os.makedirs(maps_dir, exist_ok=True)
         
@@ -166,12 +161,6 @@ class WavefrontPlanner(Node):
         except Exception as e:
             self.get_logger().error(f'Excepción al guardar el mapa: {str(e)}')
 
-    def timer_callback(self):
-        if self.stop:
-            if self.save_map_requested:
-                self.save_map()
-                self.save_map_requested = False  # Restablecer la solicitud
-            return
     
     def find_frontiers(self, occupancy_grid):
         # Uses wavefront planning to find the frontiers by searching around the robot

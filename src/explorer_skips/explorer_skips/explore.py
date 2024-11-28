@@ -48,6 +48,12 @@ class WavefrontPlanner(Node):
             10
         )
 
+        self.save_map_cli = self.create_client(
+            SaveMap,
+            'slam_toolbox/save_map',
+            callback_group=self.callback_group
+        )
+
         self.cmd_pub = self.create_publisher(Twist, 'cmd_vel', 10)
         self.callback_group = ReentrantCallbackGroup()
 

@@ -17,10 +17,9 @@ class RandomExploration(Node):
         super().__init__('random_exploration')
         self.hazmats_detected = 0
         self.visited = []
-        self.detected_positions = set()  # Para rastrear posiciones de hazmats únicos
         self.occupancy_grid = None
 
-        # Suscribirse al mapa de ocupación
+        #Suscribirse al mapa de ocupación
         self.map_subscriber = self.create_subscription(
             OccupancyGrid, '/map', self.map_callback, 10)
 
@@ -117,7 +116,7 @@ class RandomExploration(Node):
         twist.angular.z = kp_angular * angle_diff
 
         # Limitar las velocidades
-        max_linear_speed = 0.2
+        max_linear_speed = 0.03
         max_angular_speed = 1.0
         twist.linear.x = max(min(twist.linear.x, max_linear_speed), -max_linear_speed)
         twist.angular.z = max(min(twist.angular.z, max_angular_speed), -max_angular_speed)
@@ -127,23 +126,14 @@ class RandomExploration(Node):
             f'Moving to ({x:.2f}, {y:.2f}), current position ({self.current_x:.2f}, {self.current_y:.2f}), yaw {self.current_yaw:.2f}'
         )
 
-    def read_hazmat_file(self):
+    def count_hazmats_in_file(self):
         try:
             with open(HAZMAT_FILE, 'r') as file:
                 lines = file.readlines()
-                for line in lines:
-                    if "Hazmat detected:" in line:
-                        parts = line.split("position")
-                        if len(parts) > 1:
-                            pos = parts[1].strip().strip("()")
-                            x, y = map(float, pos.split(", "))
-                            if (x, y) not in self.detected_positions:
-                                self.detected_positions.add((x, y))
-                                self.hazmats_detected += 1
-                                self.get_logger().info(
-                                    f'New hazmat detected at ({x:.2f}, {y:.2f}). Total: {self.hazmats_detected}')
+                return len(lines)
         except FileNotFoundError:
             self.get_logger().warn(f'File {HAZMAT_FILE} not found!')
+            return 0
 
     def explore(self):
         # Verificar si se ha recibido el mapa
@@ -156,7 +146,8 @@ class RandomExploration(Node):
             self.get_logger().warn('Odometry not received yet.')
             return
 
-        self.read_hazmat_file()
+        # Contar los hazmats en el archivo
+        self.hazmats_detected = self.count_hazmats_in_file()
 
         if self.hazmats_detected >= TOTAL_HAZMATS:
             self.get_logger().info('Exploration complete!')

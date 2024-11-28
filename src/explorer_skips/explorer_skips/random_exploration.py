@@ -3,7 +3,7 @@ from rclpy.node import Node
 import random
 import math
 from nav_msgs.msg import OccupancyGrid, Odometry
-from geometry_msgs.msg import PoseStamped, PointStamped, Point
+from geometry_msgs.msg import PoseStamped, PointStamped, Point, PoseWithCovarianceStamped
 from std_msgs.msg import Header
 from tf_transformations import quaternion_from_euler
 
@@ -20,6 +20,10 @@ class RandomExploration(Node):
         self.occupancy_grid = None
         self.covered_data = None  # Initialize covered_data
 
+        # Flags to check if map and pose are received
+        self.map_received = False
+        self.pose_initialized = False
+
         # Suscribirse al mapa de ocupación
         self.map_subscriber = self.create_subscription(
             OccupancyGrid, '/map', self.map_callback, 10)
@@ -27,6 +31,10 @@ class RandomExploration(Node):
         # Suscribirse a la odometría
         self.odom_subscriber = self.create_subscription(
             Odometry, '/odom', self.odom_callback, 10)
+        
+        # Subscribe to AMCL pose
+        self.amcl_pose_subscriber = self.create_subscription(
+            PoseWithCovarianceStamped, '/amcl_pose', self.amcl_pose_callback, 10)
 
         # Publisher to send navigation goals
         self.goal_publisher = self.create_publisher(PoseStamped, '/goal_pose', 10)
@@ -53,10 +61,10 @@ class RandomExploration(Node):
         self.goal_active = False
 
     def map_callback(self, msg):
-        self.get_logger().info("AAA")
         # Actualizar el mapa de ocupación
         self.occupancy_grid = msg
         self.get_logger().info('Occupancy grid received!')
+        self.map_received = True
         
         # Publish coordinates of the dock
         self.landmark_pub.publish(PointStamped(
@@ -86,6 +94,26 @@ class RandomExploration(Node):
         siny_cosp = 2 * (orientation_q.w * orientation_q.z + orientation_q.x * orientation_q.y)
         cosy_cosp = 1 - 2 * (orientation_q.y * orientation_q.y + orientation_q.z * orientation_q.z)
         self.current_yaw = math.atan2(siny_cosp, cosy_cosp)
+
+    def amcl_pose_callback(self, msg):
+        # Update current position and orientation from AMCL pose
+        self.current_x = msg.pose.pose.position.x
+        self.current_y = msg.pose.pose.position.y
+
+        # Extract yaw from quaternion
+        orientation_q = msg.pose.pose.orientation
+        siny_cosp = 2 * (orientation_q.w * orientation_q.z + orientation_q.x * orientation_q.y)
+        cosy_cosp = 1 - 2 * (orientation_q.y * orientation_q.y + orientation_q.z * orientation_q.z)
+        self.current_yaw = math.atan2(siny_cosp, cosy_cosp)
+
+        # Check if the pose is initialized by examining the covariance
+        covariance = msg.pose.covariance
+        # Simple check: if the covariance values are not all zeros, assume initialized
+        if not self.pose_initialized:
+            initialized = any(cov > 0.0 for cov in covariance)
+            if initialized:
+                self.pose_initialized = True
+                self.get_logger().info('Robot pose initialized via AMCL.')
 
     def is_free(self, x, y):
         if not self.occupancy_grid:
@@ -167,6 +195,10 @@ class RandomExploration(Node):
         # Verificar si se ha recibido la odometría
         if self.current_x is None or self.current_y is None:
             self.get_logger().warn('Odometry not received yet.')
+            return
+        
+        if not self.pose_initialized:
+            self.get_logger().warn('Waiting for robot pose to be initialized via AMCL...')
             return
 
         # Contar los hazmats en el archivo

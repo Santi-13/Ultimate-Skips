@@ -15,7 +15,7 @@ class LandmarkMarker(Node):
         self.no_of_markers = 0
 
     def landmark_callback(self, msg):
-        self.get_logger().info(f'MARKING ON {msg.point.x}, {msg.point.y}')
+        # self.get_logger().info(f'MARKING ON {msg.point.x}, {msg.point.y}')
         marker = Marker()
         marker.header.frame_id = "map"
         marker.header.stamp = self.get_clock().now().to_msg()

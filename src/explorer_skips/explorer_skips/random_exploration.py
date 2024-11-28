@@ -66,6 +66,19 @@ class RandomExploration(Node):
         self.goal_points = []  # List to store generated exploration points
         self.current_goal_index = 0  # Index to track the current goal
 
+        # Offset variables to align odom with map via AMCL
+        self.offset_x = 0.0
+        self.offset_y = 0.0
+        self.offset_yaw = 0.0
+        self.pose_aligned = False  # Flag to ensure alignment happens only once
+
+    def normalize_angle(self, angle):
+        """
+        Normalize an angle to the range [-pi, pi].
+        """
+        return math.atan2(math.sin(angle), math.cos(angle))
+
+
     def map_callback(self, msg):
         # Actualizar el mapa de ocupación
         self.occupancy_grid = msg
@@ -148,7 +161,27 @@ class RandomExploration(Node):
         orientation_q = msg.pose.pose.orientation
         siny_cosp = 2 * (orientation_q.w * orientation_q.z + orientation_q.x * orientation_q.y)
         cosy_cosp = 1 - 2 * (orientation_q.y * orientation_q.y + orientation_q.z * orientation_q.z)
-        self.current_yaw = math.atan2(siny_cosp, cosy_cosp)
+        odom_yaw = math.atan2(siny_cosp, cosy_cosp)
+
+        # Normalize odom_yaw
+        odom_yaw = self.normalize_angle(odom_yaw)
+
+        # Adjusted position using offsets
+        if self.pose_aligned:
+            adjusted_x = self.current_x + self.offset_x
+            adjusted_y = self.current_y + self.offset_y
+            # Adjusted yaw if needed (not used in distance calculation)
+            adjusted_yaw = self.normalize_angle(odom_yaw + self.offset_yaw)
+        else:
+            adjusted_x = self.current_x
+            adjusted_y = self.current_y
+            adjusted_yaw = odom_yaw  # No adjustment yet
+
+        # Debug log for current goal status
+        self.get_logger().debug(f'Goal active: {self.goal_active}, '
+                                f'goal_x: {self.goal_x}, goal_y: {self.goal_y}')
+        self.get_logger().debug(f'Adjusted Position: ({adjusted_x:.2f}, {adjusted_y:.2f}), '
+                                f'Adjusted Yaw: {adjusted_yaw:.2f}')
 
         # Check if a goal is active and if the robot has reached it
         if self.goal_active and self.goal_x is not None and self.goal_y is not None:
@@ -171,7 +204,7 @@ class RandomExploration(Node):
         orientation_q = msg.pose.pose.orientation
         siny_cosp = 2 * (orientation_q.w * orientation_q.z + orientation_q.x * orientation_q.y)
         cosy_cosp = 1 - 2 * (orientation_q.y * orientation_q.y + orientation_q.z * orientation_q.z)
-        self.current_yaw = math.atan2(siny_cosp, cosy_cosp)
+        amcl_yaw = math.atan2(siny_cosp, cosy_cosp)
 
         # Check if the pose is initialized by examining the covariance
         covariance = msg.pose.covariance
@@ -181,6 +214,16 @@ class RandomExploration(Node):
             if initialized:
                 self.pose_initialized = True
                 self.get_logger().info('Robot pose initialized via AMCL.')
+
+                # Compute offsets between AMCL pose and current odom pose
+                self.offset_x = msg.pose.pose.position.x - self.current_x
+                self.offset_y = msg.pose.pose.position.y - self.current_y
+                angle_diff = self.normalize_angle(amcl_yaw - self.current_yaw)
+                self.offset_yaw = angle_diff
+
+                self.pose_aligned = True  # Set flag to indicate alignment is done
+                self.get_logger().info(f'Pose aligned with offset_x: {self.offset_x:.2f}, '
+                                       f'offset_y: {self.offset_y:.2f}, offset_yaw: {self.offset_yaw:.2f}')
 
     def is_free(self, x, y):
         if not self.occupancy_grid:
@@ -241,6 +284,10 @@ class RandomExploration(Node):
         self.goal_publisher.publish(goal)
         self.get_logger().info(f'Sent new goal to ({x:.2f}, {y:.2f})')
         self.goal_active = True
+
+        # Set the current goal coordinates for odom_callback to use
+        self.goal_x = x
+        self.goal_y = y
 
         # Publish the generated point as a landmark
         landmark_point = PointStamped(
@@ -336,8 +383,6 @@ class RandomExploration(Node):
                 ny = map_y + dy
                 if 0 <= nx < self.occupancy_grid.info.width and 0 <= ny < self.occupancy_grid.info.height:
                     self.covered_data[ny][nx] = 1
-
-
 
     def publish_covered_map(self):
         if not self.covered_data or not self.occupancy_grid:

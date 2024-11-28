@@ -29,17 +29,12 @@ class WavefrontPlanner(Node):
             10
         )
 
-        self.save_map_cli = self.create_client(
-            SaveMap,
-            'slam_toolbox/save_map',
-            callback_group=self.callback_group
+   
+        self.goal_pub = self.create_publisher(
+            PointStamped,
+            '/unknown_frontier_goal',
+            10
         )
-        
-        # self.goal_pub = self.create_publisher(
-        #     PointStamped,
-        #     '/unknown_frontier_goal',
-        #     10
-        # )
 
         self.goal_pub = self.create_publisher(
             PoseStamped,
